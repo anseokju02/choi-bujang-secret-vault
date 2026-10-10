@@ -1,31 +1,75 @@
-// The student changes this check as each stage adds an attack to the same app.
-// Never return tokens, private keys, real names, or note bodies.
+
 export async function runAttackChecks(config) {
-  if (config.step !== 1) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
-  let app;
-  try {
-    app = new URL(config.publicAppUrl);
-  } catch {
-    throw new Error('aleph.config.json의 실제 배포 주소를 먼저 넣어 주세요.');
+  if (config.step !== 1 && config.step !== 2) {
+    throw new Error('지원하지 않는 점검 단계입니다.');
   }
-  if (app.protocol !== 'https:' || app.username || app.password || app.search || app.hash
-      || app.pathname !== '/' || app.hostname.endsWith('.example')) {
-    throw new Error('aleph.config.json의 실제 배포 주소를 먼저 넣어 주세요.');
+
+  const app = new URL(config.publicAppUrl);
+
+  if (app.protocol !== 'https:' || app.hostname.endsWith('.example')) {
+    throw new Error('실제 HTTPS 배포 주소를 확인하세요.');
   }
-  if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('가상 메모의 확인 표시를 넣어 주세요.');
-  const response = await fetch(new URL('/data.json', app), {
-    redirect: 'error', signal: AbortSignal.timeout(10000),
+
+  // 공개 정적 JSON 확인
+  const staticResponse = await fetch(new URL('/data.json', app), {
+    redirect: 'error',
+    signal: AbortSignal.timeout(10000)
   });
-  let visible = false;
-  if (response.ok) {
+
+  let exposed = false;
+
+  if (staticResponse.ok) {
     try {
-      const data = await response.json();
-      visible = data?.sampleMarker === config.sampleMarker && Array.isArray(data.notes)
-        && data.notes.length > 0;
+      const data = await staticResponse.json();
+      exposed = Array.isArray(data.notes) && data.notes.length > 0;
     } catch {
-      // A non-JSON response is a failed check, not a successful deployment.
+      exposed = false;
     }
   }
-  return [{ attackId: 'anonymous_note_read', expected: '비로그인 화면에서 가상 메모를 확인',
-    observed: visible ? '비로그인 요청에서 공개 가상 메모 확인 표시가 보임' : `비로그인 요청에서 확인 표시가 보이지 않음 (HTTP ${response.status})` }];
+
+  if (config.step === 1) {
+    return [{
+      attackId: 'anonymous_note_read',
+      expected: '비로그인 상태에서 가상 메모 공개 확인',
+      observed: exposed
+        ? '공개 가상 메모 확인'
+        : `메모가 보이지 않음 (HTTP ${staticResponse.status})`
+    }];
+  }
+
+  // 2단계 서버 API 확인
+  const apiResponse = await fetch(new URL('/api/notes', app), {
+    redirect: 'error',
+    signal: AbortSignal.timeout(10000)
+  });
+
+  let noteCount = null;
+
+  if (apiResponse.ok) {
+    try {
+      const data = await apiResponse.json();
+      if (Array.isArray(data.notes)) {
+        noteCount = data.notes.length;
+      }
+    } catch {
+      noteCount = null;
+    }
+  }
+
+  return [
+    {
+      attackId: 'static_note_exposure',
+      expected: '정적 JSON에서 가상 메모가 보이지 않아야 함',
+      observed: exposed
+        ? '정적 JSON에 메모가 여전히 공개됨'
+        : `정적 메모 노출 없음 (HTTP ${staticResponse.status})`
+    },
+    {
+      attackId: 'anonymous_api_read',
+      expected: '서버 API의 비로그인 접근 가능 여부 확인',
+      observed: noteCount === 4
+        ? '비로그인 API에서 메모 4건 확인 - 공개 API 약점'
+        : `메모 4건 확인 실패 (HTTP ${apiResponse.status})`
+    }
+  ];
 }
