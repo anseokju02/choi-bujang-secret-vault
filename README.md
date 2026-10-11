@@ -51,3 +51,30 @@
 
 GitHub 코드 검색에는 색인에 따른 한계가 있다.
 실제 심판의 보안 판정은 별도로 확인해야 한다.
+
+
+## 2단계 저장점
+
+### 현재 작동하는 기능
+- 가상 메모 4건을 Supabase DB에 저장했다.
+- Vercel 서버 API를 통해 웹페이지에 메모 4건을 표시한다.
+- 공개 정적 파일 /data.json은 404를 반환한다.
+- /aleph.json에서 step 2를 확인했다.
+
+### 다시 확인하는 방법
+1. 배포 웹페이지에서 메모 카드 4개 확인
+2. /data.json에서 404 확인
+3. /api/notes에서 메모 4건 확인
+4. /aleph.json에서 step 2 확인
+
+### 제출 묶음 생성 방법
+- Node.js 22 이상 필요
+- 로컬에서 bundle-notes.json 작성
+- npm.cmd run bundle 실행
+- 생성 파일: artifacts/submission.json
+
+### 남은 약점
+/api/notes는 로그인 없이 조회할 수 있다.
+과거 Git 커밋 및 배포에 남은 노출 이력도
+해결된 것으로 간주하지 않는다.
+
