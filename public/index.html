@@ -1,52 +1,312 @@
+
 <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BYTE BACK | 점령된 자료실</title>
+  <title>BYTE BACK | 로그인 자료실</title>
   <style>
-    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
-    body { margin: 0; min-height: 100vh; background: #101a28; color: #ecf4ff; }
-    main { max-width: 760px; margin: 0 auto; padding: 44px 22px 64px; }
-    .eyebrow { color: #8ad8df; font-size: 14px; font-weight: 700; letter-spacing: .08em; }
-    h1 { margin: 16px 0; font-size: clamp(30px, 7vw, 48px); line-height: 1.2; }
-    p { font-size: 17px; line-height: 1.7; color: #bfd0e5; }
-    .notice { margin: 26px 0; padding: 18px; border: 1px solid #d07384; border-radius: 14px; color: #ffe3e8; background: #612a3544; }
-    ul { list-style: none; display: grid; gap: 12px; padding: 0; }
-    li { border: 1px solid #51667c; border-radius: 14px; padding: 17px 19px; background: #1a2a3d; }
-    strong { display: block; font-size: 18px; margin-bottom: 5px; }
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #101a28;
+      color: #ecf4ff;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 44px 22px 64px;
+    }
+    .eyebrow {
+      color: #8ad8df;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+    h1 {
+      margin: 16px 0;
+      font-size: clamp(30px, 7vw, 48px);
+      line-height: 1.2;
+    }
+    h2 { font-size: 22px; }
+    p {
+      font-size: 17px;
+      line-height: 1.7;
+      color: #bfd0e5;
+    }
+    .notice {
+      margin: 26px 0;
+      padding: 18px;
+      border: 1px solid #d07384;
+      border-radius: 14px;
+      color: #ffe3e8;
+      background: #612a3544;
+    }
+    .auth-panel {
+      padding: 24px;
+      border: 1px solid #51667c;
+      border-radius: 14px;
+      background: #1a2a3d;
+      margin-bottom: 28px;
+    }
+    form {
+      display: grid;
+      gap: 12px;
+    }
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      background: #101a28;
+      color: #ecf4ff;
+      border: 1px solid #71849a;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 18px;
+      background: #8ad8df;
+      color: #101a28;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+    .feedback {
+      min-height: 24px;
+      color: #ffb4bd;
+    }
+    ul {
+      list-style: none;
+      display: grid;
+      gap: 12px;
+      padding: 0;
+    }
+    li {
+      border: 1px solid #51667c;
+      border-radius: 14px;
+      padding: 17px 19px;
+      background: #1a2a3d;
+    }
+    strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
     li span { color: #bfd0e5; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
   <main>
-    <div class="eyebrow">BYTE BACK · 2단계 자료 이동</div>
-    <h1>점령된 자료실</h1>
-    <p>지금은 보호 장치가 없는 상태입니다. 아래 기록은 모두 실습을 위해 만든 가상 자료입니다.</p>
-    <div class="notice">2단계에서는 정적 JSON 공개를 중단했지만, 서버 API는 아직 로그인 없이 호출할 수 있습니다. 접근 제어는 이후 단계에서 구현합니다.</div>
-    <ul id="notes" aria-live="polite"><li>가상 자료를 불러오는 중입니다.</li></ul>
+    <div class="eyebrow">BYTE BACK · 3단계 로그인</div>
+    <h1>로그인 자료실</h1>
+    <p>실습용 가상 메모를 확인하는 자료실입니다.</p>
+
+    <div class="notice">
+      현재는 로그인 화면을 추가하는 단계입니다.
+      서버 API의 실제 인증 검사는 다음 제작 단계에서 구현합니다.
+    </div>
+
+    <section class="auth-panel">
+      <h2>사용자 인증</h2>
+      <p id="auth-status" role="status">
+        로그인 상태를 확인하는 중입니다.
+      </p>
+
+      <form id="login-form" hidden>
+        <label for="email">이메일</label>
+        <input
+          id="email"
+          type="email"
+          autocomplete="username"
+          required
+        >
+
+        <label for="password">비밀번호</label>
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        >
+
+        <button id="login-button" type="submit">
+          로그인
+        </button>
+      </form>
+
+      <button id="logout-button" type="button" hidden>
+        로그아웃
+      </button>
+
+      <p id="feedback" class="feedback" role="alert"></p>
+    </section>
+
+    <section id="notes-panel" hidden>
+      <h2>가상 메모 목록</h2>
+      <ul id="notes" aria-live="polite">
+        <li>자료를 불러오는 중입니다.</li>
+      </ul>
+    </section>
   </main>
+
   <script type="module">
+    import { createClient } from
+      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
+
+    const SUPABASE_URL =
+      'https://poliizqzubueodtcfomw.supabase.co';
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      'sb_publishable_DkRgET2pKrXpq5pbbtiDag__Wfa6V4Z';
+
+    const supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    const form = document.querySelector('#login-form');
+    const loginButton = document.querySelector('#login-button');
+    const logoutButton = document.querySelector('#logout-button');
+    const authStatus = document.querySelector('#auth-status');
+    const feedback = document.querySelector('#feedback');
+    const notesPanel = document.querySelector('#notes-panel');
     const list = document.querySelector('#notes');
-    try {
-      const response = await fetch('/api/notes', { cache: 'no-store' });
-      if (!response.ok) throw new Error('공개 자료를 읽을 수 없습니다.');
-      const data = await response.json();
-      if (!Array.isArray(data.notes)) throw new Error('자료 형식이 맞지 않습니다.');
-      list.replaceChildren(...data.notes.map(note => {
+
+    let activeToken = null;
+
+    async function loadNotes(token) {
+      list.replaceChildren();
+
+      const loading = document.createElement('li');
+      loading.textContent = '가상 메모를 불러오는 중입니다.';
+      list.append(loading);
+
+      try {
+        const response = await fetch('/api/notes', {
+          cache: 'no-store',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`메모 조회 실패 (HTTP ${response.status})`);
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data.notes)) {
+          throw new Error('메모 형식이 올바르지 않습니다.');
+        }
+
+        if (activeToken !== token) return;
+
+        const items = data.notes.map(note => {
+          const item = document.createElement('li');
+          const title = document.createElement('strong');
+          const content = document.createElement('span');
+
+          title.textContent = note.title;
+          content.textContent = note.content;
+
+          item.append(title, content);
+          return item;
+        });
+
+        list.replaceChildren(...items);
+      } catch (error) {
+        if (activeToken !== token) return;
+
         const item = document.createElement('li');
-        const title = document.createElement('strong');
-        const content = document.createElement('span');
-        title.textContent = note.title;
-        content.textContent = note.content;
-        item.append(title, content);
-        return item;
-      }));
-    } catch (error) {
-      const item = document.createElement('li');
-      item.textContent = error.message;
-      list.replaceChildren(item);
+        item.textContent = error.message;
+        list.replaceChildren(item);
+      }
     }
+
+    function renderSession(session) {
+      const loggedIn = Boolean(session?.user);
+      activeToken = session?.access_token ?? null;
+
+      form.hidden = loggedIn;
+      logoutButton.hidden = !loggedIn;
+      notesPanel.hidden = !loggedIn;
+
+      feedback.textContent = '';
+
+      if (loggedIn) {
+        authStatus.textContent =
+          `로그인됨: ${session.user.email}`;
+
+        void loadNotes(session.access_token);
+      } else {
+        authStatus.textContent =
+          '로그인하지 않았습니다. 이메일과 비밀번호를 입력하세요.';
+        list.replaceChildren();
+      }
+    }
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+
+      loginButton.disabled = true;
+      feedback.textContent = '로그인 확인 중입니다.';
+
+      const email = document.querySelector('#email').value;
+      const password = document.querySelector('#password').value;
+
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          feedback.textContent =
+            error.code === 'invalid_credentials'
+              ? '이메일 또는 비밀번호가 올바르지 않습니다.'
+              : `로그인 실패: ${error.message}`;
+        }
+      } catch {
+        feedback.textContent =
+          '로그인 서버에 연결하지 못했습니다.';
+      } finally {
+        document.querySelector('#password').value = '';
+        loginButton.disabled = false;
+      }
+    });
+
+    logoutButton.addEventListener('click', async () => {
+      logoutButton.disabled = true;
+
+      try {
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+          feedback.textContent =
+            `로그아웃 실패: ${error.message}`;
+        }
+      } catch {
+        feedback.textContent =
+          '로그아웃 처리 중 오류가 발생했습니다.';
+      } finally {
+        logoutButton.disabled = false;
+      }
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      renderSession(session);
+    });
   </script>
 </body>
 </html>
