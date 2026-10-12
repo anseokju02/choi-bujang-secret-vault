@@ -67,6 +67,7 @@ export default async function handler(req, res) {
         .from('aleph_vault_notes')
         .select('id, title, content')
         .eq('id', id)
+        .eq('owner_id', user.userId)
         .maybeSingle();
 
       if (error) {
@@ -112,6 +113,7 @@ export default async function handler(req, res) {
           content: payload.body
         })
         .eq('id', id)
+        .eq('owner_id', user.userId)
         .select('id, title, content')
         .maybeSingle();
 
@@ -139,6 +141,7 @@ export default async function handler(req, res) {
         .from('aleph_vault_notes')
         .delete()
         .eq('id', id)
+        .eq('owner_id', user.userId)
         .select('id')
         .maybeSingle();
 
