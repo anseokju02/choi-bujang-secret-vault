@@ -1,5 +1,5 @@
 {
-  "step": 2,
+  "step": 3,
   "repoUrl": "https://github.com/anseokju02/choi-bujang-secret-vault",
   "publicAppUrl": "https://choi-bujang-secret-vault-y9nh.vercel.app",
   "sampleMarker": "SAMPLE_NOTE_1",
@@ -11,7 +11,10 @@
   "jwksUrl": "https://poliizqzubueodtcfomw.supabase.co/auth/v1/.well-known/jwks.json"
 },
 
-  "allowedRoutes": [],
+  "allowedRoutes": [
+  "/api/notes",
+  "/api/notes/:id"
+  ],
   "originalApiUrl": null,
   "restoreRoute": null
 }
