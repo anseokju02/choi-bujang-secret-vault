@@ -173,3 +173,31 @@ RLS는 authenticated 역할의 직접 DB 접근에 적용된다.
 4. /aleph.json에서 step 4 확인
 5. git pull --ff-only origin main
 6. npm.cmd run bundle
+
+## 5단계 저장점
+
+### 구현 및 확인한 기능
+- 브라우저의 메모 CRUD 요청은 Vercel 서버 API를 경유한다.
+- 서버에서 로그인 토큰과 메모 소유자를 검증한다.
+- Supabase 메모 테이블의 PUBLIC, anon, authenticated 직접 접근 권한을 회수했다.
+- Vercel 서버에서 사용하는 service_role CRUD 권한은 유지했다.
+- 원본 Supabase REST API 주소를 aleph.config.json에 기록했다.
+
+### 직접 확인한 결과
+- A 계정에서 가상 메모 추가·조회·수정·삭제 성공
+- A 계정의 기존 메모 4건 보존
+- B 계정 로그인 및 본인 메모 1건 조회 성공
+- Supabase 원본 REST API를 공개 키로 직접 조회한 결과 HTTP 401
+- DB 응답 코드 42501, permission denied for table aleph_vault_notes
+
+### 보안 구조
+메모 요청은 브라우저 → Vercel 서버 API → Supabase DB 순서로 처리한다.
+
+브라우저에서 원본 메모 테이블을 직접 호출하는 권한은 차단했다. Supabase Auth 로그인은 현재 브라우저에서 공개 키를 사용하므로, 공개 키를 완전히 제거하는 추가 점수 항목은 아직 구현하지 않았다.
+
+### 다시 확인하는 방법
+1. A/B 계정으로 로그인하여 본인 메모 조회
+2. 시크릿 창에서 비로그인 /api/notes 접근 거부 확인
+3. Supabase 원본 REST API의 직접 조회 거부 확인
+4. /aleph.json에서 step 5 확인
+5. npm.cmd run bundle 실행
