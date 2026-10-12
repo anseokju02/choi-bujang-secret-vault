@@ -134,3 +134,42 @@ artifacts/submission.json에 결과가 저장된다.
 
 bundle-notes.json과 artifacts/submission.json은
 GitHub에 커밋하지 않는다.
+
+
+## 4단계 저장점
+
+### 구현한 기능
+- A 소유의 기존 가상 메모 4건 보존
+- B 소유의 시험용 가상 메모 1건 준비
+- 서버 API GET·PUT·DELETE에 owner_id 검사 적용
+- 로그인 사용자의 ID와 메모 소유자가 일치할 때만 허용
+- Supabase authenticated 역할에 CRUD 권한 부여
+- anon 테이블 접근 권한 차단
+- SELECT·INSERT·UPDATE·DELETE RLS 소유권 정책 적용
+
+### 직접 확인한 결과
+- A 계정에서 A 메모 4건 조회 성공
+- B 계정에서 B 메모 1건 조회 성공
+- B가 A 메모 GET 요청 시 404 NOTE_NOT_FOUND
+- B가 A 메모 PUT 요청 시 404 NOTE_NOT_FOUND
+- B가 A 메모 DELETE 요청 시 404 NOTE_NOT_FOUND
+- B 본인의 테스트 메모 추가·수정·삭제 성공
+- SQL Editor에서 RLS 역할별 조회 모의 검사 통과
+
+### 확인 범위와 주의 사항
+A/B 교차 접근 거부는 브라우저에서 직접 확인했다.
+제출용 공격 점검 스크립트는 비로그인 요청을 검사한다.
+
+Vercel 서버는 service_role을 사용하므로
+서버 API의 owner_id 조건도 반드시 유지해야 한다.
+
+RLS는 authenticated 역할의 직접 DB 접근에 적용된다.
+과거 배포의 공개 이력까지 삭제한 것은 아니다.
+
+### 재확인 및 제출
+1. A/B 계정으로 로그인하여 각자 메모 확인
+2. 상대방 메모 조회·수정·삭제 차단 확인
+3. 시크릿 창에서 비로그인 API 401 확인
+4. /aleph.json에서 step 4 확인
+5. git pull --ff-only origin main
+6. npm.cmd run bundle
