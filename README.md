@@ -117,3 +117,20 @@ GitHub 코드 검색에는 색인에 따른 한계가 있다.
 4. 시크릿 창에서 /api/notes의 401 거부를 확인한다.
 5. /aleph.json에서 step 3을 확인한다.
 6. 로컬에서 npm.cmd run bundle을 실행한다.
+
+
+### 3단계 제출용 공격 점검
+
+- 정적 /data.json 메모 노출 여부 점검
+- 비로그인 /api/notes 접근 차단 점검
+- 잘못된 로그인 토큰 거부 여부 점검
+- 비로그인 개별 메모 접근 차단 점검
+
+공격 점검은 src/attack-check.mjs에서 실제 배포 서버로
+요청을 보내고 응답 상태를 기록한다.
+
+npm.cmd run bundle 실행 시
+artifacts/submission.json에 결과가 저장된다.
+
+bundle-notes.json과 artifacts/submission.json은
+GitHub에 커밋하지 않는다.
