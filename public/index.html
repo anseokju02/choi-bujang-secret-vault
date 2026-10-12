@@ -180,19 +180,9 @@
   </main>
 
   <script type="module">
-    import { createClient } from
-      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
+    
+    import { supabase } from './auth-client.js';
 
-    const SUPABASE_URL =
-      'https://poliizqzubueodtcfomw.supabase.co';
-
-    const SUPABASE_PUBLISHABLE_KEY =
-      'sb_publishable_DkRgET2pKrXpq5pbbtiDag__Wfa6V4Z';
-
-    const supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
 
     const $ = selector => document.querySelector(selector);
 
