@@ -1,6 +1,6 @@
 
 export async function runAttackChecks(config) {
-  if (![1, 2, 3, 4, 5, 6].includes(config.step)) {
+  if (![1, 2, 3, 4, 5, 6, 7].includes(config.step)) {
     throw new Error('지원하지 않는 점검 단계입니다.');
   }
 
