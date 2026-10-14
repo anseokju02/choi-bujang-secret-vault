@@ -1,5 +1,9 @@
-﻿// ALEPH SDP 엔진이 확인한 요청만 받는 학생 판정기입니다.
-export const RULE_IDS = Object.freeze(['device_registered', 'step_up_required']);
+// ALEPH SDP 엔진이 확인한 요청만 받는 학생 판정기입니다.
+export const RULE_IDS = Object.freeze([
+  'device_registered',
+  'step_up_required',
+  'resource_route_policy',
+]);
 
 function knownText(value) {
   return typeof value === 'string' && value.trim() !== ''
@@ -13,7 +17,7 @@ function validEvent(event) {
     && Number.isInteger(event.count) && event.count >= 0;
 }
 
-// 입력의 출처와 누락 여부만 구분한다. 판정 규칙은 다음 제작에서 사용한다.
+// 누락된 신호를 정상값으로 채우지 않고, 가상 사건을 실제 위치 정보로 취급하지 않는다.
 export function inspectAccessInputs(request) {
   const signals = request?.signals;
   const source = signals?.source === 'judge_fixture' ? 'judge_fixture'
@@ -33,8 +37,22 @@ export function inspectAccessInputs(request) {
   };
 }
 
+// 엔진이 확인한 경로 모양과 실제 요청 경로가 모두 단일 자료 조회인지 확인한다.
+// 로컬 7단계 가상 사건의 /notes/:id와 서버의 /api/notes/:id를 모두 지원한다.
+function readableResource(request) {
+  if (request?.method !== 'GET'
+      || typeof request.route !== 'string'
+      || typeof request.path !== 'string') return false;
+
+  const routeMatch = /^GET \/(?:api\/)?(notes|announcements)\/:id$/u.exec(request.route);
+  const pathMatch = /^\/(?:api\/)?(notes|announcements)\/([^/?#]+)$/u.exec(request.path);
+  return routeMatch !== null && pathMatch !== null
+    && routeMatch[1] === pathMatch[1];
+}
+
 export async function decide(request) {
   const deviceRegistered = request.deviceRegistered === true;
+  const resourceAllowed = readableResource(request);
   const inputs = inspectAccessInputs(request);
 
   const unusualHour = inputs.isFixture && inputs.hour !== null
@@ -49,16 +67,21 @@ export async function decide(request) {
     && Number.isInteger(request.stepUp.authAgeSeconds)
     && request.stepUp.authAgeSeconds >= 0
     && request.stepUp.authAgeSeconds <= 900;
-  const shouldStepUp = deviceRegistered
+  const shouldStepUp = deviceRegistered && resourceAllowed
     && unusualHour && unfamiliarNetwork && burst
     && !recentlyVerified;
 
   return {
     schema: 'aleph.decision.v1',
     requestId: request.requestId,
-    decision: !deviceRegistered ? 'deny' : shouldStepUp ? 'step_up' : 'allow',
+    decision: !deviceRegistered || !resourceAllowed ? 'deny'
+      : shouldStepUp ? 'step_up' : 'allow',
     reasonCode: !deviceRegistered ? 'device_not_registered'
-      : shouldStepUp ? 'step_up_required' : 'approved',
-    ruleIds: shouldStepUp ? [RULE_IDS[0], RULE_IDS[1]] : [RULE_IDS[0]],
+      : !resourceAllowed ? 'route_not_allowed'
+        : shouldStepUp ? 'step_up_required' : 'approved',
+    ruleIds: !deviceRegistered ? [RULE_IDS[0]]
+      : !resourceAllowed ? [RULE_IDS[0], RULE_IDS[2]]
+        : shouldStepUp ? [RULE_IDS[0], RULE_IDS[1], RULE_IDS[2]]
+          : [RULE_IDS[0], RULE_IDS[2]],
   };
 }

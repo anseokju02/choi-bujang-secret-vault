@@ -1,6 +1,6 @@
 
 export async function runAttackChecks(config) {
-  if (![1, 2, 3, 4, 5, 6, 7].includes(config.step)) {
+  if (![1, 2, 3, 4, 5, 6, 7, 8].includes(config.step)) {
     throw new Error('지원하지 않는 점검 단계입니다.');
   }
 
@@ -95,7 +95,7 @@ export async function runAttackChecks(config) {
     '/api/notes/00000000-0000-4000-8000-000000000000'
   );
 
-  return [
+  const attempts = [
     {
       attackId: 'static_note_exposure',
       expected: '정적 메모 노출 없음',
@@ -119,4 +119,33 @@ export async function runAttackChecks(config) {
       observed: `비로그인 개별 요청 HTTP ${itemResponse.status}`
     }
   ];
+
+  if (config.step === 8) {
+    // 실제 배포 주소에 보낸 비로그인 요청의 HTTP 상태만 기록한다.
+    const noticeRead = await check('/api/announcements/stage8-notice-1');
+    const noticeWrite = await check('/api/announcements/stage8-notice-1', {
+      method: 'POST'
+    });
+    const teacherRead = await check('/api/teacher/stage8-test');
+
+    attempts.push(
+      {
+        attackId: 'anonymous_announcement_read',
+        expected: '비로그인 공지 조회 401 거부',
+        observed: `비로그인 공지 요청 HTTP ${noticeRead.status}`
+      },
+      {
+        attackId: 'announcement_write_rejected',
+        expected: '공지 쓰기 POST 405 거부',
+        observed: `공지 쓰기 요청 HTTP ${noticeWrite.status}`
+      },
+      {
+        attackId: 'unknown_teacher_route',
+        expected: '알 수 없는 강사 자료 경로 404 거부',
+        observed: `강사 자료 경로 요청 HTTP ${teacherRead.status}`
+      }
+    );
+  }
+
+  return attempts;
 }
