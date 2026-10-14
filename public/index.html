@@ -100,6 +100,12 @@
       color: #bfd0e5;
       white-space: pre-wrap;
     }
+    li small {
+      display: block;
+      margin-bottom: 6px;
+      color: #8ad8df;
+      overflow-wrap: anywhere;
+    }
     .feedback {
       min-height: 24px;
       color: #8ad8df;
@@ -176,6 +182,11 @@
 
       <h2>가상 메모 목록</h2>
       <ul id="notes" aria-live="polite"></ul>
+
+      <div class="panel" aria-labelledby="announcements-heading">
+        <h2 id="announcements-heading">강사 공지 자원</h2>
+        <ul id="announcements" aria-live="polite"></ul>
+      </div>
     </section>
   </main>
 
@@ -191,6 +202,7 @@
     const notesPanel = $('#notes-panel');
     const noteForm = $('#note-form');
     const list = $('#notes');
+    const announcementsList = $('#announcements');
 
     let activeToken = null;
     let editingId = null;
@@ -267,10 +279,13 @@
         for (const note of data.notes) {
           const item = document.createElement('li');
           const title = document.createElement('strong');
+          const resourceId = document.createElement('small');
           const content = document.createElement('span');
           const actions = document.createElement('div');
 
           title.textContent = note.title;
+          resourceId.textContent = `메모 자원 ID: memo:${note.id}`;
+          item.dataset.resourceId = `memo:${note.id}`;
           content.textContent = note.content;
           actions.className = 'actions';
 
@@ -324,7 +339,7 @@
           });
 
           actions.append(editButton, deleteButton);
-          item.append(title, content, actions);
+          item.append(title, resourceId, content, actions);
           list.append(item);
         }
       } catch (error) {
@@ -333,6 +348,32 @@
         const item = document.createElement('li');
         item.textContent = error.message;
         list.replaceChildren(item);
+      }
+    }
+
+    async function loadAnnouncement(token = activeToken) {
+      announcementsList.replaceChildren();
+      try {
+        const notice = await apiRequest(
+          '/api/announcements/stage8-notice-1', 'GET', undefined, token
+        );
+        if (activeToken !== token) return;
+
+        const item = document.createElement('li');
+        const title = document.createElement('strong');
+        const resourceId = document.createElement('small');
+        const description = document.createElement('span');
+        title.textContent = notice.title;
+        resourceId.textContent = `공지 자원 ID: ${notice.resourceId}`;
+        item.dataset.resourceId = notice.resourceId;
+        description.textContent = notice.description;
+        item.append(title, resourceId, description);
+        announcementsList.append(item);
+      } catch (error) {
+        if (activeToken !== token) return;
+        const item = document.createElement('li');
+        item.textContent = error.message;
+        announcementsList.append(item);
       }
     }
 
@@ -431,10 +472,12 @@
         $('#auth-status').textContent =
           `로그인됨: ${session.user.email}`;
         void loadNotes(activeToken);
+        void loadAnnouncement(activeToken);
       } else {
         $('#auth-status').textContent =
           '로그인하지 않았습니다. 이메일과 비밀번호를 입력하세요.';
         list.replaceChildren();
+        announcementsList.replaceChildren();
         resetEditor();
       }
     });
