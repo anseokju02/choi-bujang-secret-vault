@@ -1,6 +1,6 @@
 
 export async function runAttackChecks(config) {
-  if (![1, 2, 3, 4, 5, 6, 7, 8].includes(config.step)) {
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9].includes(config.step)) {
     throw new Error('지원하지 않는 점검 단계입니다.');
   }
 
@@ -120,7 +120,7 @@ export async function runAttackChecks(config) {
     }
   ];
 
-  if (config.step === 8) {
+  if (config.step >= 8) {
     // 실제 배포 주소에 보낸 비로그인 요청의 HTTP 상태만 기록한다.
     const noticeRead = await check('/api/announcements/stage8-notice-1');
     const noticeWrite = await check('/api/announcements/stage8-notice-1', {
