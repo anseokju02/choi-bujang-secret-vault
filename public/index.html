@@ -116,13 +116,13 @@
       color: #8ad8df;
     }
     .install-panel { border-color: #8ad8df; }
-    .operations-panel { border-color: #99b4e2; }
+    .operations-panel { border-color: #99b4e2; box-sizing: border-box; width: min(1100px, calc(100vw - 44px)); position: relative; left: 50%; transform: translateX(-50%); }
     .operations-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
     .operations-grid section { padding: 14px; border: 1px solid #51667c; border-radius: 10px; }
     .operations-grid h3 { margin: 0 0 8px; }
     .operations-grid p { margin: 0; overflow-wrap: anywhere; }
     .operations-table { overflow-x: auto; }
-    .operations-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .operations-table table { width: 100%; min-width: 1080px; border-collapse: collapse; font-size: 14px; }
     .operations-table th, .operations-table td { border: 1px solid #51667c; padding: 9px; text-align: left; vertical-align: top; }
     .operations-table td { overflow-wrap: anywhere; }
     .operations-table th { background: #283d55; }
@@ -244,7 +244,7 @@
       </div>
       <p id="operations-check-status" role="status">아직 실행하지 않았습니다.</p>
       <div class="operations-table"><table aria-label="실제 HTTP 요청과 미실행 시험">
-        <thead><tr><th>단계</th><th>요청</th><th>기대</th><th>실제</th><th>결과</th><th>점검 ID</th><th>확인 시각</th></tr></thead>
+        <thead><tr><th>단계</th><th>시험</th><th>요청</th><th>기대</th><th>실제</th><th>결과</th><th>점검 ID</th><th>확인 시각</th></tr></thead>
         <tbody id="operations-rows"></tbody>
       </table></div>
     </section>
@@ -277,7 +277,7 @@
       body.replaceChildren();
       for (const row of rows) {
         const tr = document.createElement('tr');
-        for (const field of ['step', 'request', 'expected', 'actual', 'outcome', 'checkId', 'checkedAt']) {
+        for (const field of ['step', 'name', 'request', 'expected', 'actual', 'outcome', 'checkId', 'checkedAt']) {
           const cell = document.createElement('td');
           cell.textContent = row[field] ?? '—';
           tr.append(cell);
