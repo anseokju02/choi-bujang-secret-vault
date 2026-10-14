@@ -1,5 +1,5 @@
 {
-  "step": 9,
+  "step": 10,
   "repoUrl": "https://github.com/anseokju02/choi-bujang-secret-vault",
   "publicAppUrl": "https://choi-bujang-secret-vault-y9nh.vercel.app",
   "sampleMarker": "SAMPLE_NOTE_1",
@@ -14,5 +14,5 @@
     "GET /api/announcements/:id"
   ],
   "originalApiUrl": "https://poliizqzubueodtcfomw.supabase.co/rest/v1/aleph_vault_notes",
-  "restoreRoute": null
+  "restoreRoute": "POST /api/restore-note"
 }

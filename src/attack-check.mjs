@@ -1,6 +1,6 @@
 
 export async function runAttackChecks(config) {
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9].includes(config.step)) {
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(config.step)) {
     throw new Error('지원하지 않는 점검 단계입니다.');
   }
 
@@ -42,8 +42,8 @@ export async function runAttackChecks(config) {
       attackId: 'anonymous_note_read',
       expected: '비로그인 가상 메모 공개 확인',
       observed: exposed
-        ? '공개 메모 확인'
-        : `메모 확인 실패 (HTTP ${staticResponse.status})`
+        ? '공개 메모 확인 표시가 보임'
+        : `공개 메모 확인 표시가 보이지 않음 (HTTP ${staticResponse.status})`
     }];
   }
 
@@ -143,6 +143,25 @@ export async function runAttackChecks(config) {
         attackId: 'unknown_teacher_route',
         expected: '알 수 없는 강사 자료 경로 404 거부',
         observed: `강사 자료 경로 요청 HTTP ${teacherRead.status}`
+      }
+    );
+  }
+
+  if (config.step >= 10) {
+    const restoreWithoutLogin = await check('/api/restore-note', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+    });
+    const restoreWrongMethod = await check('/api/restore-note');
+    attempts.push(
+      {
+        attackId: 'anonymous_restore_denied',
+        expected: '비로그인 복구 POST 401 거부',
+        observed: `비로그인 복구 요청 HTTP ${restoreWithoutLogin.status}`
+      },
+      {
+        attackId: 'restore_get_rejected',
+        expected: '복구 경로 GET 405 거부',
+        observed: `복구 GET 요청 HTTP ${restoreWrongMethod.status}`
       }
     );
   }
