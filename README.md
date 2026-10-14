@@ -352,3 +352,36 @@ RLS는 authenticated 역할의 직접 DB 접근에 적용된다.
 ### 확인 범위와 한계
 - 최초 기기 등록은 유효한 계정 로그인과 기기 귀속 WebAuthn 증명에 기반한다. 별도 관리자의 수동 승인을 구현한 것은 아니다. 동기화된 패스키는 물리적으로 하나의 기기를 확인할 수 없어 등록에서 제외한다.
 - 이 단계의 로컬 암호 검증·기존 판정 시험과 비로그인 배포 점검은 직접 실행한 범위대로만 기록한다. 실제 계정으로 기기 등록과 승인 후 자료 조회, 엔진의 실제 기기 등록 및 운영 심판의 판정은 별도로 확인해야 한다.
+
+## 12단계 저장점: 탈환 작전실
+
+### 출처와 구현 범위
+
+| 구성 | 출처와 실행 결과의 범위 |
+| --- | --- |
+| 신원·기기·경로를 확인하고 판정을 받는 운영 서비스 | **제공된 ALEPH SDP 엔진**. 운영 심판의 요청·사건·회수 기록은 이 저장소에서 자동으로 읽을 수 없다. |
+| `src/decider.mjs` | **학생 판정 규칙**. `docs/DECIDER_REQUEST.md`의 엔진 확인 입력만 사용하며 `device_registered`, `step_up_required`, `resource_route_policy` 세 규칙을 구현한다. 로컬 가상 요청의 허용·거부·추가 확인은 운영 심판의 판정이 아니다. |
+| `src/detect.mjs` | **학생 탐지 규칙**. 같은 가명 주체의 GET이 10분 안에 120건을 넘으면 `propose_revocation`을 반환한다. `docs/DETECT_EVENTS.md`와 `npm run detect:test`는 로컬 가상 사건 계약이다. 실제 사건 전달과 접속 회수 집행은 확인되지 않았다. |
+| 접속 알림·회수 | 별도의 운영 알림 기록이나 회수 집행 경로는 **연결·검증되지 않았다**. 화면에 ‘미확인’으로 표시한다. 로컬 탐지 제안을 실제 차단으로 표현하지 않는다. |
+| 로그인 자료실·기기 확인·작전실 | **학생 웹앱**. `/api/auth`, `/api/device`, `/api/notes`, `/api/announcements/:id`, `/api/restore-note`는 기존 서버 API다. `/api/operations`는 공개 가능한 규칙 이름·배포 정보와 **운영 기록의 부재**만 제공한다. 메모 본문·토큰·사본·개인키를 돌려주지 않는다. |
+| 복구 | 학생 구현 `src/restore-note.mjs`와 `scripts/policy-preview.mjs`·`scripts/policy-restore.mjs`. 작전실의 **배포 커밋**은 검증된 사본 버전이나 실제 복구 성공을 뜻하지 않는다. 사본 버전·복구 이력이 없으면 ‘미확인/미실행’이다. |
+
+### 설치와 실행
+
+1. 검토할 Git 커밋을 고정하고 공개 저장소 `https://github.com/anseokju02/choi-bujang-secret-vault`를 새 폴더에 받아 `npm ci`를 실행한다. Node.js 22 이상을 사용한다. 외부 계정·비밀값은 저장소에서 복사하지 않는다.
+2. `npm run build -- --local`, `npm run operations:test`, `npm run decider:test`, `npm run fixture:7`, `npm run detect:test`, `npm run restore:test`, `npm run device:test`를 실행한다. 이는 코드·가상 사건의 로컬 시험이며 실제 엔진·심판 검사가 아니다.
+3. 이미 배포된 `https://choi-bujang-secret-vault-y9nh.vercel.app/`와 `/aleph.json`을 열고 `step`, 커밋 SHA, 저장소 주소가 검사 대상과 일치하는지 확인한다. 화면의 ‘탈환 작전실’은 로그인 없이 보이지만 보호 자료는 기존 로그인·승인 기기 검사 뒤에만 보인다.
+4. 새 배포를 만들 때는 `vercel.json`의 `npm run build`·`public` 설정을 사용한다. 서버에는 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`(로그인)와 `SUPABASE_SECRET_KEY`(서버 전용 검증·DB)가 필요하다. 값은 서버 설정 화면에만 입력한다. 로그인 발급자·주소·WebAuthn 사이트 바인딩을 새 주소에 맞추고 기존 배포와 분리해 검증해야 한다. 값 자체를 Git, README, 점검 JSON에 적지 않는다. 안전 사본 복구에는 별도로 검증한 `ALEPH_RESTORE_BACKUP_JSON`·`ALEPH_RESTORE_EXPECTED_SHA256`가 필요하지만 이 저장소에 포함하지 않는다. 새 배포에서의 로그인·기기 등록은 수행했다고 주장하지 않는다.
+
+### 실제 HTTP 증빙 만들기
+
+1. 새 커밋이 배포된 뒤 `npm run operations:check`를 실행한다. 이 명령은 `aleph.config.json`의 배포 주소에 안전한 공개 정상 요청과 비로그인 금지 요청을 보내고, 응답 HTTP 상태·학생이 생성한 `X-Check-Id`·UTC 확인 시각을 `artifacts/stage12-http-evidence.json`에 기록한다. `artifacts/`는 Git에서 제외된다. 점검 ID는 **학생 자체 점검 ID**이며 운영 엔진의 요청 ID가 아니다.
+2. 자료실 화면의 **지금 확인** 버튼으로 같은 표를 볼 수 있다. 등록 기기에서 로그인·승인을 마친 경우에는 본인 메모 목록, 강사 공지, 기기 승인 API의 HTTP 200도 확인한다. 승인되지 않은 기기로 로그인한 경우에는 메모 API의 HTTP 403을 확인한다. 토큰·응답 본문은 표에 넣지 않는다. 화면의 **결과 JSON 저장**을 누르면 상태·점검 ID·시각만 로컬로 내려받는다.
+3. 표의 ‘기대와 일치’는 *그 요청의 실제 HTTP 응답*을 뜻한다. 1~11단계 모든 보안 규칙의 통과, 운영 엔진의 판정, 복구 완료를 뜻하지 않는다. A/B 교차 소유권·원본 API 직접 접근·실제 기기 등록·이상 접속 재확인·실제 회수·B 메모 복구·운영 심판 **41종 공격 시험**은 별도 실행 기록이 없으면 **미실행**으로 남긴다. 401 비로그인 거부만으로 소유권 거부를 입증하지 않는다.
+4. 실제 계정으로 A/B 본인 정상 요청과 상대 소유 자료 거부를 시험할 때에는 각 계정이 직접 승인한 기기에서 수행하고, 두 요청의 HTTP 상태·점검 ID·UTC 시각만 기록한다. 자료 제목·본문·토큰·이메일은 증빙에서 제외한다. 41종 시험 결과는 포털 심판의 실제 실행과 판정이 나온 뒤에만 별도로 갱신한다.
+
+### 복구와 재현의 경계
+
+- 정책 훼손이 의심되면 `node scripts/policy-preview.mjs`로 검증된 커밋과 현재 파일의 해시·차이를 먼저 비교한다. 차이가 있는 경우에만 `node scripts/policy-restore.mjs`의 미리 보기 및 `--expect-current-sha=... --apply` 절차를 사용한다. 다른 파일과 기존 자료는 지우지 않는다. 이전에 검증된 상태라면 실행하지 않는다.
+- B 메모 복구는 별도 보관한 신뢰할 사본·해시가 맞고 B의 본인 요청이 검증될 때 한 건만 수행한다. 사본이나 소유자 증거가 없으면 복구 POST를 실행하지 않는다. 복구한 다음 A/B 정상·거부 요청과 판정·탐지·설치 경로를 재확인한다.
+- 저장점의 `aleph.config.json`은 단계 **12**이며 `judgeIssuer`는 제공된 주소를 그대로 유지한다. `npm run bundle`은 배포된 같은 커밋을 확인한 후 실행해 `artifacts/submission.json`을 만든다. 제출 묶음의 자체 HTTP 점검은 운영 심판 41종 시험과 별개의 증빙이다.

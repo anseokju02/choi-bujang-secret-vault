@@ -11,6 +11,8 @@
     "detect:test": "node scripts/detect-test.mjs",
     "restore:test": "node --test test/restore-note.test.mjs",
     "device:test": "node --test test/device-access.test.mjs",
+    "operations:test": "node --test test/operation-checks.test.mjs",
+    "operations:check": "node scripts/operations-check.mjs",
     "fixture:7": "node scripts/fixture-7.mjs",
     "xdr:run": "node scripts/xdr-run.mjs"
   },

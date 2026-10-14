@@ -1,6 +1,6 @@
 
 export async function runAttackChecks(config) {
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(config.step)) {
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(config.step)) {
     throw new Error('지원하지 않는 점검 단계입니다.');
   }
 
@@ -196,6 +196,15 @@ export async function runAttackChecks(config) {
         observed: `비로그인 기기 등록 요청 HTTP ${registerWithoutLogin.status}`,
       },
     );
+  }
+
+  if (config.step >= 12) {
+    const operations = await check('/api/operations');
+    attempts.push({
+      attackId: 'operations_summary_available',
+      expected: '공개 구성 요약 HTTP 200, 실제 운영 기록 없으면 미확인',
+      observed: `작전실 요약 요청 HTTP ${operations.status}`,
+    });
   }
 
   return attempts;
