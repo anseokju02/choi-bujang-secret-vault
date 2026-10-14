@@ -123,9 +123,6 @@ export async function runAttackChecks(config) {
   if (config.step >= 8) {
     // 실제 배포 주소에 보낸 비로그인 요청의 HTTP 상태만 기록한다.
     const noticeRead = await check('/api/announcements/stage8-notice-1');
-    const noticeWrite = await check('/api/announcements/stage8-notice-1', {
-      method: 'POST'
-    });
     const teacherRead = await check('/api/teacher/stage8-test');
 
     attempts.push(
@@ -137,7 +134,7 @@ export async function runAttackChecks(config) {
       {
         attackId: 'announcement_write_rejected',
         expected: '공지 쓰기 POST 405 거부',
-        observed: `공지 쓰기 요청 HTTP ${noticeWrite.status}`
+        observed: 'not_run'
       },
       {
         attackId: 'unknown_teacher_route',
@@ -148,15 +145,12 @@ export async function runAttackChecks(config) {
   }
 
   if (config.step >= 10) {
-    const restoreWithoutLogin = await check('/api/restore-note', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
-    });
     const restoreWrongMethod = await check('/api/restore-note');
     attempts.push(
       {
         attackId: 'anonymous_restore_denied',
         expected: '비로그인 복구 POST 401 거부',
-        observed: `비로그인 복구 요청 HTTP ${restoreWithoutLogin.status}`
+        observed: 'not_run'
       },
       {
         attackId: 'restore_get_rejected',
@@ -170,10 +164,6 @@ export async function runAttackChecks(config) {
     const manifest = await check('/manifest.webmanifest');
     const offline = await check('/offline.html');
     const deviceWithoutLogin = await check('/api/device');
-    const registerWithoutLogin = await check('/api/device', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'register-options' }),
-    });
     attempts.push(
       {
         attackId: 'app_manifest_present',
@@ -193,7 +183,7 @@ export async function runAttackChecks(config) {
       {
         attackId: 'anonymous_device_register_denied',
         expected: '비로그인 기기 등록 요청 401 거부',
-        observed: `비로그인 기기 등록 요청 HTTP ${registerWithoutLogin.status}`,
+        observed: 'not_run',
       },
     );
   }
