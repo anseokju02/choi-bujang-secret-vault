@@ -14,9 +14,8 @@ export async function runAttackChecks(config) {
   }
 
   async function check(path, attackId, options = {}) {
-    const url = new URL(path, app);
     // 각 공개 요청과 제출 묶음의 attackId를 같은 값으로 연결한다.
-    url.searchParams.set('attackId', attackId);
+    const url = new URL(`${path}?attackId=${encodeURIComponent(attackId)}`, app);
     return fetch(url, {
       redirect: 'error',
       signal: AbortSignal.timeout(10000),
