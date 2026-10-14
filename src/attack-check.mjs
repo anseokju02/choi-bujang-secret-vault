@@ -14,13 +14,12 @@ export async function runAttackChecks(config) {
   }
 
   async function check(path, attackId, options = {}) {
-    // 각 공개 요청과 제출 묶음의 attackId를 같은 값으로 연결한다.
-    const url = new URL(`${path}?attackId=${encodeURIComponent(attackId)}`, app);
-    return fetch(url, {
+    return fetch(new URL(path, app), {
       redirect: 'error',
       signal: AbortSignal.timeout(10000),
       ...options,
-      headers: { ...options.headers, 'X-Attack-Id': attackId, 'X-Check-Id': attackId },
+      // 심판 실행기가 이 요청을 해당 점검 결과와 대조하는 메타데이터.
+      alephEvidence: { caseId: attackId, requestKey: 'read' },
     });
   }
 
@@ -103,24 +102,22 @@ export async function runAttackChecks(config) {
     {
       attackId: 'static_note_exposure',
       expected: '정적 메모 노출 없음',
-      observed: exposed
-        ? '정적 메모 노출 확인'
-        : `정적 메모 노출 없음 (HTTP ${staticResponse.status})`
+      observed: `HTTP ${staticResponse.status}`
     },
     {
       attackId: 'anonymous_api_read',
       expected: '비로그인 목록 조회 401 거부',
-      observed: `비로그인 목록 요청 HTTP ${apiResponse.status}`
+      observed: `HTTP ${apiResponse.status}`
     },
     {
       attackId: 'invalid_login_token',
       expected: '잘못된 토큰 401 거부',
-      observed: `잘못된 토큰 요청 HTTP ${invalidTokenResponse.status}`
+      observed: `HTTP ${invalidTokenResponse.status}`
     },
     {
       attackId: 'anonymous_item_read',
       expected: '비로그인 개별 조회 401 거부',
-      observed: `비로그인 개별 요청 HTTP ${itemResponse.status}`
+      observed: `HTTP ${itemResponse.status}`
     }
   ];
 
@@ -134,7 +131,7 @@ export async function runAttackChecks(config) {
       {
         attackId: 'anonymous_announcement_read',
         expected: '비로그인 공지 조회 401 거부',
-        observed: `비로그인 공지 요청 HTTP ${noticeRead.status}`
+        observed: `HTTP ${noticeRead.status}`
       },
       {
         attackId: 'announcement_write_rejected',
@@ -144,7 +141,7 @@ export async function runAttackChecks(config) {
       {
         attackId: 'unknown_teacher_route',
         expected: '알 수 없는 강사 자료 경로 404 거부',
-        observed: `강사 자료 경로 요청 HTTP ${teacherRead.status}`
+        observed: `HTTP ${teacherRead.status}`
       }
     );
   }
@@ -160,7 +157,7 @@ export async function runAttackChecks(config) {
       {
         attackId: 'restore_get_rejected',
         expected: '복구 경로 GET 405 거부',
-        observed: `복구 GET 요청 HTTP ${restoreWrongMethod.status}`
+        observed: `HTTP ${restoreWrongMethod.status}`
       }
     );
   }
@@ -173,17 +170,17 @@ export async function runAttackChecks(config) {
       {
         attackId: 'app_manifest_present',
         expected: '설치 앱 manifest HTTP 200',
-        observed: `설치 manifest 요청 HTTP ${manifest.status}`,
+        observed: `HTTP ${manifest.status}`,
       },
       {
         attackId: 'public_offline_guidance',
         expected: '보호 자료 없는 오프라인 안내 HTTP 200',
-        observed: `오프라인 안내 요청 HTTP ${offline.status}`,
+        observed: `HTTP ${offline.status}`,
       },
       {
         attackId: 'anonymous_device_status_denied',
         expected: '비로그인 기기 상태 401 거부',
-        observed: `비로그인 기기 상태 요청 HTTP ${deviceWithoutLogin.status}`,
+        observed: `HTTP ${deviceWithoutLogin.status}`,
       },
       {
         attackId: 'anonymous_device_register_denied',
@@ -198,7 +195,7 @@ export async function runAttackChecks(config) {
     attempts.push({
       attackId: 'operations_summary_available',
       expected: '공개 구성 요약 HTTP 200, 실제 운영 기록 없으면 미확인',
-      observed: `작전실 요약 요청 HTTP ${operations.status}`,
+      observed: `HTTP ${operations.status}`,
     });
   }
 
