@@ -13,16 +13,21 @@ export async function runAttackChecks(config) {
     throw new Error('실제 HTTPS 배포 주소를 확인하세요.');
   }
 
-  async function check(path, options = {}) {
-    return fetch(new URL(path, app), {
+  async function check(path, attackId, options = {}) {
+    const url = new URL(path, app);
+    // 각 공개 요청과 제출 묶음의 attackId를 같은 값으로 연결한다.
+    url.searchParams.set('attackId', attackId);
+    return fetch(url, {
       redirect: 'error',
       signal: AbortSignal.timeout(10000),
-      ...options
+      ...options,
+      headers: { ...options.headers, 'X-Attack-Id': attackId, 'X-Check-Id': attackId },
     });
   }
 
   // 정적 메모 노출 확인
-  const staticResponse = await check('/data.json');
+  const staticResponse = await check('/data.json', config.step === 1
+    ? 'anonymous_note_read' : 'static_note_exposure');
 
   let exposed = false;
 
@@ -48,7 +53,7 @@ export async function runAttackChecks(config) {
   }
 
   // 비로그인 목록 요청
-  const apiResponse = await check('/api/notes');
+  const apiResponse = await check('/api/notes', 'anonymous_api_read');
 
   // 2단계 점검 유지
   if (config.step === 2) {
@@ -84,7 +89,7 @@ export async function runAttackChecks(config) {
   }
 
   // 3단계: 잘못된 토큰 검사
-  const invalidTokenResponse = await check('/api/notes', {
+  const invalidTokenResponse = await check('/api/notes', 'invalid_login_token', {
     headers: {
       Authorization: 'Bearer invalid.token.value'
     }
@@ -92,7 +97,7 @@ export async function runAttackChecks(config) {
 
   // 3단계: 비로그인 개별 메모 검사
   const itemResponse = await check(
-    '/api/notes/00000000-0000-4000-8000-000000000000'
+    '/api/notes/00000000-0000-4000-8000-000000000000', 'anonymous_item_read'
   );
 
   const attempts = [
@@ -122,8 +127,9 @@ export async function runAttackChecks(config) {
 
   if (config.step >= 8) {
     // 실제 배포 주소에 보낸 비로그인 요청의 HTTP 상태만 기록한다.
-    const noticeRead = await check('/api/announcements/stage8-notice-1');
-    const teacherRead = await check('/api/teacher/stage8-test');
+    const noticeRead = await check('/api/announcements/stage8-notice-1',
+      'anonymous_announcement_read');
+    const teacherRead = await check('/api/teacher/stage8-test', 'unknown_teacher_route');
 
     attempts.push(
       {
@@ -145,7 +151,7 @@ export async function runAttackChecks(config) {
   }
 
   if (config.step >= 10) {
-    const restoreWrongMethod = await check('/api/restore-note');
+    const restoreWrongMethod = await check('/api/restore-note', 'restore_get_rejected');
     attempts.push(
       {
         attackId: 'anonymous_restore_denied',
@@ -161,9 +167,9 @@ export async function runAttackChecks(config) {
   }
 
   if (config.step >= 11) {
-    const manifest = await check('/manifest.webmanifest');
-    const offline = await check('/offline.html');
-    const deviceWithoutLogin = await check('/api/device');
+    const manifest = await check('/manifest.webmanifest', 'app_manifest_present');
+    const offline = await check('/offline.html', 'public_offline_guidance');
+    const deviceWithoutLogin = await check('/api/device', 'anonymous_device_status_denied');
     attempts.push(
       {
         attackId: 'app_manifest_present',
@@ -189,7 +195,7 @@ export async function runAttackChecks(config) {
   }
 
   if (config.step >= 12) {
-    const operations = await check('/api/operations');
+    const operations = await check('/api/operations', 'operations_summary_available');
     attempts.push({
       attackId: 'operations_summary_available',
       expected: '공개 구성 요약 HTTP 200, 실제 운영 기록 없으면 미확인',
