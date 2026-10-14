@@ -22,6 +22,12 @@ if (!Array.isArray(data.notes)) {
 
 await mkdir(resolve(root, 'public'), { recursive: true });
 
+// Bundle the pinned browser WebAuthn client locally: no remote script or key storage.
+await copyFile(
+  resolve(root, 'node_modules', '@simplewebauthn', 'browser', 'dist', 'bundle', 'index.umd.min.js'),
+  resolve(root, 'public', 'webauthn.js')
+);
+
 if (config.step === 1) {
   await copyFile(source, output);
 } else {

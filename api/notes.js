@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { createLoginVerifier } from '../src/verify-login.mjs';
+import { requireApprovedDevice } from '../src/device-access.mjs';
 import config from '../aleph.config.json' with { type: 'json' };
 
 let loginVerifier;
@@ -60,6 +61,14 @@ export default async function handler(req, res) {
       autoRefreshToken: false
     }
   });
+
+  let approved;
+  try {
+    approved = await requireApprovedDevice({ req, user: verifiedUser, db: supabase, secret: key });
+  } catch {
+    return res.status(503).json({ error: 'DEVICE_SERVICE_UNAVAILABLE' });
+  }
+  if (!approved) return res.status(403).json({ error: 'DEVICE_NOT_APPROVED' });
 
   // GET: 로그인한 사용자의 메모 목록
   if (req.method === 'GET') {

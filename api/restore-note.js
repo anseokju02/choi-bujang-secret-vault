@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { createLoginVerifier } from '../src/verify-login.mjs';
 import { restoreOneNote, verifiedNoteBackup } from '../src/restore-note.mjs';
+import { requireApprovedDevice } from '../src/device-access.mjs';
 
 let loginVerifier;
 
@@ -28,6 +29,17 @@ export default async function handler(req, res) {
   }
   if (!user) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
+  const db = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  let approved;
+  try {
+    approved = await requireApprovedDevice({ req, user, db, secret: key });
+  } catch {
+    return res.status(503).json({ error: 'DEVICE_SERVICE_UNAVAILABLE' });
+  }
+  if (!approved) return res.status(403).json({ error: 'DEVICE_NOT_APPROVED' });
+
   const backup = verifiedNoteBackup(
     process.env.ALEPH_RESTORE_BACKUP_JSON,
     process.env.ALEPH_RESTORE_EXPECTED_SHA256,
@@ -36,9 +48,6 @@ export default async function handler(req, res) {
   try { payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
   catch { return res.status(400).json({ error: 'INVALID_JSON' }); }
 
-  const db = backup && createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const result = await restoreOneNote({ backup, payload, user, db });
+  const result = await restoreOneNote({ backup, payload, user, db: backup ? db : null });
   return res.status(result.status).json(result.body);
 }

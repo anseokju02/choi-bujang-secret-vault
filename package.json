@@ -10,6 +10,7 @@
     "decider:test": "node scripts/decider-test.mjs",
     "detect:test": "node scripts/detect-test.mjs",
     "restore:test": "node --test test/restore-note.test.mjs",
+    "device:test": "node --test test/device-access.test.mjs",
     "fixture:7": "node scripts/fixture-7.mjs",
     "xdr:run": "node scripts/xdr-run.mjs"
   },
@@ -17,6 +18,8 @@
     "node": ">=22"
   },
   "dependencies": {
+    "@simplewebauthn/browser": "14.0.0",
+    "@simplewebauthn/server": "14.0.3",
     "@supabase/supabase-js": "2.117.2",
     "jose": "6.2.12"
   }

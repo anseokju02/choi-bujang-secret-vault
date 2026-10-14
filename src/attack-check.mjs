@@ -1,6 +1,6 @@
 
 export async function runAttackChecks(config) {
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(config.step)) {
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(config.step)) {
     throw new Error('지원하지 않는 점검 단계입니다.');
   }
 
@@ -163,6 +163,38 @@ export async function runAttackChecks(config) {
         expected: '복구 경로 GET 405 거부',
         observed: `복구 GET 요청 HTTP ${restoreWrongMethod.status}`
       }
+    );
+  }
+
+  if (config.step >= 11) {
+    const manifest = await check('/manifest.webmanifest');
+    const offline = await check('/offline.html');
+    const deviceWithoutLogin = await check('/api/device');
+    const registerWithoutLogin = await check('/api/device', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'register-options' }),
+    });
+    attempts.push(
+      {
+        attackId: 'app_manifest_present',
+        expected: '설치 앱 manifest HTTP 200',
+        observed: `설치 manifest 요청 HTTP ${manifest.status}`,
+      },
+      {
+        attackId: 'public_offline_guidance',
+        expected: '보호 자료 없는 오프라인 안내 HTTP 200',
+        observed: `오프라인 안내 요청 HTTP ${offline.status}`,
+      },
+      {
+        attackId: 'anonymous_device_status_denied',
+        expected: '비로그인 기기 상태 401 거부',
+        observed: `비로그인 기기 상태 요청 HTTP ${deviceWithoutLogin.status}`,
+      },
+      {
+        attackId: 'anonymous_device_register_denied',
+        expected: '비로그인 기기 등록 요청 401 거부',
+        observed: `비로그인 기기 등록 요청 HTTP ${registerWithoutLogin.status}`,
+      },
     );
   }
 

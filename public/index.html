@@ -4,6 +4,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a28">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <title>BYTE BACK | 로그인 자료실</title>
   <style>
     :root {
@@ -110,12 +115,13 @@
       min-height: 24px;
       color: #8ad8df;
     }
+    .install-panel { border-color: #8ad8df; }
     [hidden] { display: none !important; }
   </style>
 </head>
 <body>
   <main>
-    <div class="eyebrow">BYTE BACK · 4단계 소유권 보호</div>
+    <div class="eyebrow">BYTE BACK · 보호 자료실</div>
     <h1>로그인 자료실</h1>
     <p>실습용 가상 메모를 관리하는 자료실입니다.</p>
 
@@ -125,6 +131,14 @@
     다른 사용자의 메모는 조회·수정·삭제할 수 없도록
     접근을 제한합니다.
   </div>
+
+    <section class="panel install-panel" aria-labelledby="install-heading">
+      <h2 id="install-heading">자료실 앱 열기</h2>
+      <p>이 화면을 홈 화면에 설치하면 같은 주소의 자료실을 앱처럼 열 수 있습니다.</p>
+      <button id="install-button" type="button" hidden>홈 화면에 설치</button>
+      <p id="install-status" role="status">설치를 지원하는 브라우저에서는 설치 안내가 표시됩니다. 모바일은 브라우저의 공유 메뉴에서 ‘홈 화면에 추가’를 선택할 수 있습니다.</p>
+      <p id="offline-status" role="status" hidden>오프라인 상태입니다. 인터넷에 다시 연결한 뒤 로그인과 기기 확인을 진행해 주세요. 보호 자료는 오프라인에 저장하지 않습니다.</p>
+    </section>
 
 
     <section class="panel">
@@ -154,9 +168,22 @@
       <p id="feedback" class="feedback" role="alert"></p>
     </section>
 
+    <section id="device-panel" class="panel" hidden aria-labelledby="device-heading">
+      <h2 id="device-heading">이 기기 확인</h2>
+      <p id="device-status" role="status">서버의 기기 승인 상태를 확인하는 중입니다.</p>
+      <p>로그인 후에도 이 기기가 서버에서 승인됐는지 확인해야 자료를 열 수 있습니다. 기기에서 사용하는 잠금 해제 수단으로 확인하며, 이 화면은 개인키를 저장하지 않습니다.</p>
+      <div class="actions">
+        <button id="register-device" type="button" hidden>기기 승인 요청</button>
+        <button id="verify-device" type="button" hidden>등록된 기기 확인</button>
+      </div>
+      <p id="device-feedback" class="feedback" role="alert"></p>
+    </section>
+
     <section id="notes-panel" hidden>
       <div class="panel">
         <h2 id="editor-heading">가상 메모 추가</h2>
+        <p>새 기기를 등록하려면 먼저 등록된 기기로 확인해야 합니다.</p>
+        <button id="add-device" type="button" class="secondary">새 기기 추가 요청</button>
 
         <form id="note-form">
           <label for="note-title">제목</label>
@@ -190,6 +217,7 @@
     </section>
   </main>
 
+  <script src="/webauthn.js" defer></script>
   <script type="module">
     
     import { supabase } from './auth-client.js';
@@ -199,13 +227,61 @@
 
     const loginForm = $('#login-form');
     const logoutButton = $('#logout-button');
+    const devicePanel = $('#device-panel');
+    const registerDeviceButton = $('#register-device');
+    const verifyDeviceButton = $('#verify-device');
+    const addDeviceButton = $('#add-device');
     const notesPanel = $('#notes-panel');
     const noteForm = $('#note-form');
     const list = $('#notes');
     const announcementsList = $('#announcements');
-
+    const installButton = $('#install-button');
+    let installPrompt = null;
+    let deviceExpiryTimer = null;
     let activeToken = null;
     let editingId = null;
+
+    function showConnectivity() {
+      $('#offline-status').hidden = navigator.onLine;
+      if (!navigator.onLine) closeMaterials();
+      else if (activeToken) void checkDevice(activeToken);
+    }
+
+    window.addEventListener('online', showConnectivity);
+    window.addEventListener('offline', showConnectivity);
+    showConnectivity();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        void navigator.serviceWorker.register('/sw.js').catch(() => {
+          $('#install-status').textContent = '오프라인 안내를 준비하지 못했습니다. 온라인에서 새로고침해 주세요.';
+        });
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault();
+      installPrompt = event;
+      installButton.hidden = false;
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installPrompt = null;
+      installButton.hidden = true;
+      $('#install-status').textContent = '앱이 설치됐습니다. 온라인 상태에서 로그인해 이용하세요.';
+    });
+
+    installButton.addEventListener('click', async () => {
+      if (!installPrompt) return;
+      const prompt = installPrompt;
+      installPrompt = null;
+      installButton.hidden = true;
+      await prompt.prompt();
+      const result = await prompt.userChoice;
+      $('#install-status').textContent = result.outcome === 'accepted'
+        ? '설치 요청을 확인했습니다.'
+        : '언제든 브라우저의 설치 메뉴에서 다시 설치할 수 있습니다.';
+    });
 
     async function apiRequest(path, method = 'GET', body,
                               token = activeToken) {
@@ -222,6 +298,7 @@
       const response = await fetch(path, {
         method,
         headers,
+        credentials: 'same-origin',
         cache: 'no-store',
         body: body === undefined
           ? undefined
@@ -233,13 +310,105 @@
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(
+        const error = new Error(
           `${data.error ?? 'REQUEST_FAILED'} (HTTP ${response.status})`
         );
+        error.status = response.status;
+        throw error;
       }
 
       return data;
     }
+
+    function closeMaterials() {
+      notesPanel.hidden = true;
+      list.replaceChildren();
+      announcementsList.replaceChildren();
+      resetEditor();
+    }
+
+    async function checkDevice(token = activeToken) {
+      clearTimeout(deviceExpiryTimer);
+      deviceExpiryTimer = null;
+      closeMaterials();
+      devicePanel.hidden = false;
+      registerDeviceButton.hidden = true;
+      verifyDeviceButton.hidden = true;
+      $('#device-status').textContent = '서버의 기기 승인 상태를 확인하는 중입니다.';
+      try {
+        const state = await apiRequest('/api/device', 'GET', undefined, token);
+        if (activeToken !== token) return;
+        if (state.approved === true) {
+          if (!Number.isSafeInteger(state.expiresAt)) throw new Error('기기 승인 시간이 올바르지 않습니다.');
+          $('#device-status').textContent = '서버에서 이 기기의 등록을 확인했습니다.';
+          deviceExpiryTimer = setTimeout(() => { void checkDevice(token); },
+            Math.max(1000, state.expiresAt * 1000 - Date.now()));
+          devicePanel.hidden = true;
+          notesPanel.hidden = false;
+          void loadNotes(token);
+          void loadAnnouncement(token);
+        } else {
+          $('#device-status').textContent = state.registered
+            ? '먼저 등록한 기기로 확인하세요. 이후 다른 기기를 추가할 수 있습니다.'
+            : '승인 전입니다. 기기 등록을 요청하고 기기 잠금 해제로 확인해 주세요.';
+          registerDeviceButton.hidden = state.registered;
+          verifyDeviceButton.hidden = !state.registered;
+        }
+      } catch (error) {
+        if (activeToken !== token) return;
+        $('#device-status').textContent = `기기 상태를 확인할 수 없습니다. 자료실은 닫혀 있습니다. (${error.message})`;
+      }
+    }
+
+    async function runDeviceAction(kind) {
+      const token = activeToken;
+      const browser = globalThis.SimpleWebAuthnBrowser;
+      const feedback = devicePanel.hidden ? $('#note-feedback') : $('#device-feedback');
+      if (!browser?.browserSupportsWebAuthn()) {
+        feedback.textContent = '이 브라우저에서 기기 인증을 사용할 수 없습니다.';
+        return;
+      }
+      registerDeviceButton.disabled = true;
+      verifyDeviceButton.disabled = true;
+      addDeviceButton.disabled = true;
+      feedback.textContent = '기기 확인을 진행하는 중입니다.';
+      try {
+        const registration = kind === 'register';
+        const { options } = await apiRequest('/api/device', 'POST', {
+          action: registration ? 'register-options' : 'verify-options'
+        }, token);
+        const response = registration
+          ? await browser.startRegistration({ optionsJSON: options })
+          : await browser.startAuthentication({ optionsJSON: options });
+        const result = await apiRequest('/api/device', 'POST', {
+          action: registration ? 'register-verify' : 'verify-proof', response
+        }, token);
+        if (activeToken !== token || result.approved !== true) return;
+        feedback.textContent = '서버에서 기기를 확인했습니다.';
+        await checkDevice(token);
+      } catch (error) {
+        if (activeToken === token) {
+          feedback.textContent = error.message.includes('DEVICE_BOUND_KEY_REQUIRED')
+            ? '이 기기에만 저장되는 인증 수단이 필요합니다. 동기화되는 패스키는 기기 등록에 사용할 수 없습니다.'
+            : `기기 확인을 마치지 못했습니다. ${error.message}`;
+        }
+      } finally {
+        registerDeviceButton.disabled = false;
+        verifyDeviceButton.disabled = false;
+        addDeviceButton.disabled = false;
+      }
+    }
+
+    registerDeviceButton.addEventListener('click', () => { void runDeviceAction('register'); });
+    verifyDeviceButton.addEventListener('click', () => { void runDeviceAction('verify'); });
+    addDeviceButton.addEventListener('click', () => { void runDeviceAction('register'); });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && activeToken) void checkDevice(activeToken);
+    });
+    window.addEventListener('pageshow', event => {
+      if (event.persisted && activeToken) void checkDevice(activeToken);
+    });
 
     function resetEditor() {
       editingId = null;
@@ -310,6 +479,7 @@
               $('#note-title').focus();
             } catch (error) {
               $('#note-feedback').textContent = error.message;
+              if (error.status === 403) void checkDevice();
             }
           });
 
@@ -335,6 +505,7 @@
               await loadNotes();
             } catch (error) {
               $('#note-feedback').textContent = error.message;
+              if (error.status === 403) void checkDevice();
             }
           });
 
@@ -344,6 +515,11 @@
         }
       } catch (error) {
         if (activeToken !== token) return;
+
+        if (error.status === 403) {
+          void checkDevice(token);
+          return;
+        }
 
         const item = document.createElement('li');
         item.textContent = error.message;
@@ -371,6 +547,10 @@
         announcementsList.append(item);
       } catch (error) {
         if (activeToken !== token) return;
+        if (error.status === 403) {
+          void checkDevice(token);
+          return;
+        }
         const item = document.createElement('li');
         item.textContent = error.message;
         announcementsList.append(item);
@@ -410,6 +590,7 @@
         await loadNotes();
       } catch (error) {
         $('#note-feedback').textContent = error.message;
+        if (error.status === 403) void checkDevice();
       } finally {
         button.disabled = false;
       }
@@ -465,20 +646,18 @@
 
       loginForm.hidden = loggedIn;
       logoutButton.hidden = !loggedIn;
-      notesPanel.hidden = !loggedIn;
+      closeMaterials();
+      devicePanel.hidden = !loggedIn;
       $('#feedback').textContent = '';
+      $('#device-feedback').textContent = '';
 
       if (loggedIn) {
         $('#auth-status').textContent =
           `로그인됨: ${session.user.email}`;
-        void loadNotes(activeToken);
-        void loadAnnouncement(activeToken);
+        void checkDevice(activeToken);
       } else {
         $('#auth-status').textContent =
           '로그인하지 않았습니다. 이메일과 비밀번호를 입력하세요.';
-        list.replaceChildren();
-        announcementsList.replaceChildren();
-        resetEditor();
       }
     });
   </script>

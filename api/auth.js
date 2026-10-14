@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { clearDeviceCookies } from '../src/device-access.mjs';
 
 const COOKIE = '__Host-aleph-refresh';
 
@@ -51,8 +52,9 @@ function readRefreshCookie(req) {
   }
 }
 
-function sendSession(res, session, user) {
+function sendSession(res, session, user, clearDevice = false) {
   setRefreshCookie(res, session.refresh_token);
+  if (clearDevice) clearDeviceCookies(res);
 
   return res.status(200).json({
     accessToken: session.access_token,
@@ -140,7 +142,8 @@ export default async function handler(req, res) {
       return sendSession(
         res,
         data.session,
-        data.user
+        data.user,
+        true
       );
     }
 
@@ -188,6 +191,7 @@ export default async function handler(req, res) {
     }
 
     clearRefreshCookie(res);
+    clearDeviceCookies(res);
     return res.status(204).end();
 
   } catch {

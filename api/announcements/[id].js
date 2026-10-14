@@ -1,4 +1,6 @@
+import { createClient } from '@supabase/supabase-js';
 import { createLoginVerifier } from '../../src/verify-login.mjs';
+import { requireApprovedDevice } from '../../src/device-access.mjs';
 import config from '../../aleph.config.json' with { type: 'json' };
 
 let loginVerifier;
@@ -33,6 +35,17 @@ export default async function handler(req, res) {
   if (!verifiedUser) {
     return res.status(401).json({ error: 'UNAUTHORIZED' });
   }
+
+  let approved;
+  try {
+    const db = createClient(process.env.SUPABASE_URL, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    approved = await requireApprovedDevice({ req, user: verifiedUser, db, secret: key });
+  } catch {
+    return res.status(503).json({ error: 'DEVICE_SERVICE_UNAVAILABLE' });
+  }
+  if (!approved) return res.status(403).json({ error: 'DEVICE_NOT_APPROVED' });
 
   const requestedId = new URL(req.url, 'https://example.invalid')
     .pathname.split('/').pop();
