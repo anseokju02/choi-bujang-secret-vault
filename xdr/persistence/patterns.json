@@ -1,0 +1,45 @@
+{
+  "schema": "aleph.xdr.patterns.v1",
+  "moduleKey": "persistence",
+  "techniques": ["MITRE ATT&CK T1543", "MITRE ATT&CK T1053"],
+  "source": "xdr/fixtures/persistence.json의 수업용 Wazuh 형태 경보",
+  "note": "T1543/T1053 태그, 규칙 수준, 계정 이름 또는 임시 파일 하나만으로 차단하지 않는다. 서비스·예약 작업·시작 항목에 등록된 실행 대상과 서명·기존 목록·반복 등 독립된 정황을 함께 확인한다. 경로와 계정 원문은 판정 이유나 로그에 넣지 않는다.",
+  "patterns": [
+    {
+      "id": "unsigned_service_persistence",
+      "action": "block",
+      "evidence": "새 서비스 또는 서비스 실행 대상이 서명 없이 임시 위치를 가리키거나, 원격 주소에서 서명 없는 서비스 등록이 반복된다.",
+      "threshold": "서비스 등록·실행 대상 변경과 서명 부재 및 임시 위치 또는 반복 원격 등록"
+    },
+    {
+      "id": "unknown_scheduled_task",
+      "action": "block",
+      "evidence": "처음 보는 예약 작업 또는 임의 이름의 작업이 임시 위치의 실행 파일을 사용하며 수업 시간 밖 실행 같은 추가 정황이 있다.",
+      "threshold": "예약 작업 생성 징후와 임시 실행 대상, 낯선 작업 정보"
+    },
+    {
+      "id": "unlisted_startup_or_dual_autorun",
+      "action": "block",
+      "evidence": "시작 폴더에 기존 목록에 없는 실행 파일이 추가되거나 시작 프로그램과 예약 작업이 동일한 임시 파일을 자동 실행 대상으로 등록한다.",
+      "threshold": "시작 위치의 새 실행 대상 또는 두 자동 실행 수단이 공유하는 임시 대상"
+    },
+    {
+      "id": "unlisted_reboot_persistence",
+      "action": "block",
+      "evidence": "기존 목록에 없는 서비스가 재부팅 뒤에도 남도록 등록되고 실행 대상이 임시 위치에 있다.",
+      "threshold": "목록 밖 서비스, 재시작 지속성, 임시 위치의 결합"
+    },
+    {
+      "id": "single_or_unverified_change",
+      "action": "alert",
+      "evidence": "수업 중 생성한 작업, 서명 미확인 항목, 서비스 설명 변경, 단독 임시 파일, 시작 폴더 단발 변경처럼 등록·승인·지속성 여부가 불분명하다.",
+      "threshold": "확인할 단서는 있으나 차단할 복합 증거 없음"
+    },
+    {
+      "id": "routine_system_activity",
+      "action": "record",
+      "evidence": "서명된 기존 서비스, 바뀌지 않은 운영체제 업데이트 일정, 기존 수업용 예약 작업, 로그인·로그아웃·화면 조회 등이다.",
+      "threshold": "새 자동 실행 항목 또는 비정상 변경 근거 없음"
+    }
+  ]
+}

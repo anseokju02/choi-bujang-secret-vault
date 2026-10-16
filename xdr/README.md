@@ -73,3 +73,11 @@ node scripts/xdr-run.mjs brute-force
 `npm run xdr:run -- known-cve`는 import나 파일 읽기가 없는 `decide.mjs`로 경보를 재분류해 Git에서 제외된 `result.json`에 씁니다. 로컬 예시 결과는 block 8건, alert 8건, record 8건입니다. `node xdr/known-cve/respond.mjs`는 block·alert 16건을 원문 없이 `xdr/alerts.log`에 기록하고 기존 두 XDR의 로그를 보존합니다. 차단 경보는 출발지별로 묶어 근거 ID와 15분 만료 시각이 있는 후보를 `artifacts/xdr-known-cve-deny-candidates.json`에 기록합니다. 로그·후보 파일 모두 Git에서 제외됩니다.
 
 경보 출발지와 엔진이 확인한 `subjectId`·`deviceId`를 연결하는 계약이 없어 후보는 `active: false`입니다. `src/decider.mjs`에 거부 규칙을 추가하거나 실제 접속을 차단하지 않았습니다. 로컬 건수는 운영 심판 점수가 아닙니다.
+
+## 몰래 심어진 프로그램 실습 기록
+
+`node xdr/persistence/read-alerts.mjs`는 수업용 지속성 경보 24건에서 출발지·가상 계정·규칙 수준·설명 범주를 읽습니다. 실행 파일의 경로와 설명 원문은 출력하지 않습니다. `xdr/persistence/patterns.json`에는 서명 없는 서비스 등록·낯선 예약 작업·기존 목록 밖 시작 항목·재부팅 뒤 남는 서비스와 정상 수업 도구를 구분하는 근거를 적었습니다. T1543/T1053 태그나 임시 파일 하나만으로 차단하지 않습니다.
+
+`npm run xdr:run -- persistence`는 import나 파일 입출력이 없는 `decide.mjs`를 사용하여 경보를 다시 분류하고 Git에서 제외된 `result.json`을 만듭니다. 로컬 예시 결과는 block 8건, alert 8건, record 8건입니다. `node xdr/persistence/respond.mjs`는 block·alert 16건을 실행 파일 경로 없이 `xdr/alerts.log`에 기록하고 기존 XDR 로그를 보존합니다. 차단 경보는 경보의 PC 이름별로 묶어 근거 ID와 15분 만료 시각을 가진 후보를 `artifacts/xdr-persistence-quarantine-candidates.json`에 기록합니다. 두 출력 경로는 Git에서 제외됩니다.
+
+수업용 경보의 `agent.name`은 운영 엔진이 검증한 `deviceId`가 아닙니다. 따라서 격리 후보는 `active: false`이며 `src/decider.mjs`에 추가하거나 실제 PC 접속을 막지 않았습니다. 검증된 기기 식별과 사건 연계 계약이 제공돼야 정책에 연결할 수 있습니다. 로컬 건수는 심판 점수가 아닙니다.
