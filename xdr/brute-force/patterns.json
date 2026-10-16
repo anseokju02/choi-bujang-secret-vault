@@ -1,0 +1,33 @@
+{
+  "schema": "aleph.xdr.patterns.v1",
+  "moduleKey": "brute-force",
+  "technique": "MITRE ATT&CK T1110",
+  "source": "xdr/fixtures/brute-force.json의 수업용 Wazuh 형태 경보",
+  "note": "경보에 적힌 실패 횟수와 설명을 근거로 판단한다. T1110 표기나 규칙 수준 하나만으로 차단하지 않는다. 아래 횟수 기준은 이 실습을 위해 정한 값이며 실제 운영 정책이 아니다.",
+  "patterns": [
+    {
+      "id": "repeated_failed_logins",
+      "action": "block",
+      "evidence": "같은 출발지 또는 계정의 인증 실패가 15건 이상이고, 짧은 시간에 몰리거나 자동 반복·변형 시도를 했다는 설명이 있다.",
+      "threshold": "실패 >= 15건, 반복 정황 확인"
+    },
+    {
+      "id": "password_spray",
+      "action": "block",
+      "evidence": "같은 출발지에서 여러 계정을 대상으로 같은 비밀번호를 연속 입력하거나, 계정을 바꿔 가며 규칙적으로 실패했다. 실제 비밀번호 값은 읽거나 기록하지 않는다.",
+      "threshold": "다수 계정에 대한 연속/규칙적 시도"
+    },
+    {
+      "id": "limited_auth_failures",
+      "action": "alert",
+      "evidence": "로그인 실패가 2~14건이거나 평소와 다른 주소·잠금 후 재시도처럼 추가 확인이 필요한 정황이 있다. 성공이 뒤따르더라도 공격으로 단정하지 않는다.",
+      "threshold": "실패 2~14건 또는 별도 의심 정황"
+    },
+    {
+      "id": "routine_auth_event",
+      "action": "record",
+      "evidence": "정상적인 로그인·로그아웃·세션 유지·자료실 열기·비밀번호 변경 성공 또는 한 번 실패 뒤 성공한 사건에는 반복 공격 근거가 없다.",
+      "threshold": "공격이나 추가 확인 근거 없음"
+    }
+  ]
+}

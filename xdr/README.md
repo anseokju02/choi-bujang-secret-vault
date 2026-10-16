@@ -49,3 +49,11 @@ node scripts/xdr-run.mjs brute-force
 - `xdr/alerts.log` 기록과 판정기 연결은 `respond.mjs` 같은 다른 파일에서 합니다. `decide.mjs` 는 판단 결과만 돌려줍니다.
 
 인터넷을 끈 상태에서 `npm run xdr:run -- <moduleKey>` 를 돌려도 같은 결과가 나오면 심판에서도 같은 결과가 나옵니다.
+
+## 무차별 로그인 실습 기록
+
+`node xdr/brute-force/read-alerts.mjs` 는 경보 28건에서 출발지·가상 계정·규칙 수준과 비밀값을 제외한 설명 범주를 읽습니다. `xdr/brute-force/patterns.json` 에는 반복 인증 실패와 여러 계정 대상 시도의 근거, 애매한 시도, 정상 사건을 구분한 기준을 적었습니다. 격리 실행 대상 `xdr/brute-force/decide.mjs` 는 import, 네트워크, 파일 읽기 없이 판단합니다.
+
+`npm run xdr:run -- brute-force` 는 로컬 `result.json` 에 28건의 판정을 다시 기록합니다. 수업용 경보에서 block 10건, alert 9건, record 9건을 확인했습니다. `node xdr/brute-force/respond.mjs` 는 차단 후보의 시작·만료 시각과 근거 경보 ID를 `artifacts/xdr-brute-force-deny-candidates.json` 에, block·alert 19건을 `xdr/alerts.log` 에 기록합니다. 이 출력 파일들은 Git에 올리지 않습니다.
+
+경보에 있는 출발지 주소와 가상 계정명은 운영 엔진이 확인한 ZTNA의 `subjectId`·`deviceId` 와 연결되어 있지 않습니다. 따라서 후보는 `active: false` 이며, 실제 판정기에 거부 규칙을 넣거나 접속을 차단했다고 주장하지 않습니다. 신뢰할 수 있는 사건 상관 정보가 제공되어야만 실제 정책과 연결할 수 있습니다. 위 건수는 로컬 예시 경보의 결과이며 운영 심판 점수가 아닙니다.
