@@ -1,0 +1,51 @@
+{
+  "schema": "aleph.xdr.patterns.v1",
+  "moduleKey": "privilege",
+  "techniques": ["MITRE ATT&CK T1068", "MITRE ATT&CK T1078"],
+  "source": "xdr/fixtures/privilege.json의 수업용 Wazuh 형태 경보",
+  "note": "T1068/T1078 태그나 관리자라는 단어 하나만으로 차단하지 않는다. 관리자 그룹의 실제 추가, 새 권한으로 명령 실행, 평소와 다른 주소·시간, 반복 변경 등 함께 있는 근거를 본다. 설명에 취소·실패·변경 없음이 있으면 성공한 권한 변경으로 취급하지 않는다.",
+  "patterns": [
+    {
+      "id": "remote_admin_group_addition",
+      "action": "block",
+      "evidence": "원격 주소에서 보통 계정을 administrators 그룹에 추가한 경보가 있다.",
+      "threshold": "관리자 그룹 실제 추가와 원격 주소 정황"
+    },
+    {
+      "id": "new_admin_then_command",
+      "action": "block",
+      "evidence": "방금 관리자가 된 계정이 관리자 명령을 실행하거나, 보통 계정의 관리자 그룹 추가 직후 권한 명령이 이어진다.",
+      "threshold": "새 관리자 권한 취득과 명령 실행의 결합"
+    },
+    {
+      "id": "unusual_admin_command_or_session",
+      "action": "block",
+      "evidence": "수업 시간 밖 처음 보는 주소에서 관리자 명령을 실행하거나, 관리자 세션 전환이 처음 보는 주소에서 일어난다.",
+      "threshold": "관리자 권한 사용·전환과 낯선 주소, 시간 정황"
+    },
+    {
+      "id": "bulk_or_rapid_admin_group_change",
+      "action": "block",
+      "evidence": "한 주소에서 여러 계정이 administrators 그룹에 추가되거나, 관리자 그룹에서 빠졌다가 1분 뒤 재가입한다.",
+      "threshold": "관리자 그룹 변경과 다수 계정·빠른 재가입의 결합"
+    },
+    {
+      "id": "off_hours_or_other_account_privilege_use",
+      "action": "block",
+      "evidence": "업무와 다른 시각에 관리자 그룹 추가 및 명령 실행이 함께 있거나 다른 계정의 권한으로 관리자 명령을 실행한다.",
+      "threshold": "실행된 권한 명령과 그룹·타 계정 사용 정황"
+    },
+    {
+      "id": "single_or_unverified_privilege_activity",
+      "action": "alert",
+      "evidence": "취소한 권한 창, 비관리자 그룹 추가, 평소 주소의 명령 한 번, 자기 계정 조회, 후속 명령 없는 권한 상승, 실패한 명령 등은 추가 확인이 필요하다.",
+      "threshold": "권한 관련 단서는 있으나 성공한 비정상 관리자 사용의 복합 증거 부족"
+    },
+    {
+      "id": "routine_account_activity",
+      "action": "record",
+      "evidence": "평범한 로그인·로그아웃·읽기·비밀번호 변경·기존 관리 계정의 통상 사용이며 관리자 그룹 편입 또는 새 권한 사용 징후가 없다.",
+      "threshold": "권한 변경·비정상 명령 실행 근거 없음"
+    }
+  ]
+}

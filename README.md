@@ -397,3 +397,7 @@ RLS는 authenticated 역할의 직접 DB 접근에 적용된다.
 ## XDR 몰래 심어진 프로그램 보너스
 
 `xdr/README.md`의 지속성 경보 실습 기록을 따른다. 저장소 루트에서 `node xdr/persistence/read-alerts.mjs`, `npm run xdr:run -- persistence`, `node xdr/persistence/respond.mjs`를 실행하면 수업용 경보 24건의 분류와 로그·격리 후보를 재생성할 수 있다. 로컬 판정은 block 8건, alert 8건, record 8건이다. 기존 XDR 로그는 보존하고 실행 결과·격리 후보는 Git에서 제외한다. 경보의 PC 이름과 엔진의 검증된 `deviceId`를 연결할 근거가 없어 실제 격리는 수행하지 않았다. 심판 점수는 포털 제출 뒤에만 확인한다.
+
+## XDR 권한 가로채기 보너스
+
+`xdr/README.md`의 권한 가로채기 실습 기록을 따른다. 저장소 루트에서 `node xdr/privilege/read-alerts.mjs`, `npm run xdr:run -- privilege`, `node xdr/privilege/respond.mjs`를 실행하면 수업용 경보 26건의 분류와 로그·차단 후보를 재생성할 수 있다. 로컬 판정은 block 9건, alert 8건, record 9건이다. 기존 XDR 로그를 보존하고 결과·비활성 차단 후보는 Git에서 제외한다. 가상 계정·IP를 엔진의 검증된 `subjectId`·`deviceId`에 연결하는 계약이 없어 실제 접속 거부는 수행하지 않았다. 심판 점수는 포털 제출 뒤에만 확인한다.
