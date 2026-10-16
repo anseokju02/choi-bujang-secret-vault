@@ -65,3 +65,11 @@ node scripts/xdr-run.mjs brute-force
 `npm run xdr:run -- web-injection`은 격리 실행 가능한 `decide.mjs`로 26건을 다시 분류하고 Git에 올리지 않는 `result.json`을 만듭니다. 로컬 예시에서 block 8건, alert 9건, record 9건입니다. `node xdr/web-injection/respond.mjs`는 block·alert 17건을 `xdr/alerts.log`에 기록하며, 기존 다른 모듈의 기록은 유지합니다. 차단 경보는 출발지별로 묶어 근거 ID와 15분 만료 시각을 가진 후보를 `artifacts/xdr-web-injection-deny-candidates.json`에 기록합니다. 두 출력 경로 모두 Git에서 제외됩니다.
 
 웹 경보의 출발지 주소와 수업용 URL만으로는 운영 엔진이 확인한 `subjectId`·`deviceId`를 알아낼 수 없습니다. 후보는 `active: false`이며 `src/decider.mjs`에 주입되지 않습니다. 따라서 로컬 차단 판정 8건은 실제 접속 거부 8건을 뜻하지 않습니다. 신뢰할 수 있는 사건과 요청의 상관 계약이 제공되어야 실제 정책으로 연결할 수 있습니다.
+
+## 알려진 취약점 악용 실습 기록
+
+`node xdr/known-cve/read-alerts.mjs`는 수업용 경보 24건의 출발지·가상 계정·규칙 수준·설명 범주만 출력합니다. 요청 머리글·URL·설명 원문은 출력하지 않습니다. `xdr/known-cve/patterns.json`은 CVE-2021-44228 수업용 경보에서 요청 자체의 완전한 원격 조회 형태를 이름 검색·부분 표기와 구분하는 근거를 담습니다. 구문을 실행·변형하지 않으며, 이름이나 T1190 태그만으로 차단하지 않습니다.
+
+`npm run xdr:run -- known-cve`는 import나 파일 읽기가 없는 `decide.mjs`로 경보를 재분류해 Git에서 제외된 `result.json`에 씁니다. 로컬 예시 결과는 block 8건, alert 8건, record 8건입니다. `node xdr/known-cve/respond.mjs`는 block·alert 16건을 원문 없이 `xdr/alerts.log`에 기록하고 기존 두 XDR의 로그를 보존합니다. 차단 경보는 출발지별로 묶어 근거 ID와 15분 만료 시각이 있는 후보를 `artifacts/xdr-known-cve-deny-candidates.json`에 기록합니다. 로그·후보 파일 모두 Git에서 제외됩니다.
+
+경보 출발지와 엔진이 확인한 `subjectId`·`deviceId`를 연결하는 계약이 없어 후보는 `active: false`입니다. `src/decider.mjs`에 거부 규칙을 추가하거나 실제 접속을 차단하지 않았습니다. 로컬 건수는 운영 심판 점수가 아닙니다.

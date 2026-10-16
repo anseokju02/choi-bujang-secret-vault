@@ -389,3 +389,7 @@ RLS는 authenticated 역할의 직접 DB 접근에 적용된다.
 ## XDR 웹 주입 보너스
 
 `xdr/README.md`의 웹 주입 실습 기록을 따른다. 저장소 루트에서 `node xdr/web-injection/read-alerts.mjs`, `npm run xdr:run -- web-injection`, `node xdr/web-injection/respond.mjs` 순서로 다시 실행할 수 있다. 수업용 경보 26건의 로컬 판정은 block 8건, alert 9건, record 9건이다. 로그와 만료 시각이 있는 거부 후보는 Git에서 제외되며 실제 ZTNA 거부는 연결되지 않았다. 운영 심판의 판정은 포털 제출 후에만 확인할 수 있다.
+
+## XDR 알려진 취약점 악용 보너스
+
+`xdr/README.md`의 알려진 취약점 악용 기록을 따른다. 저장소 루트에서 `node xdr/known-cve/read-alerts.mjs`, `npm run xdr:run -- known-cve`, `node xdr/known-cve/respond.mjs` 순서로 다시 실행할 수 있다. 수업용 경보 24건의 로컬 판정은 block 8건, alert 8건, record 8건이다. 이전 XDR 로그를 보존하며 기록과 비활성 거부 후보는 Git에 넣지 않는다. 신뢰된 사용자·기기 연결 정보가 없어 실제 ZTNA 거부는 수행하지 않았다. 심판 결과는 포털 제출 이후에만 알 수 있다.

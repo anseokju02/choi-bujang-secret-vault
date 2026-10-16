@@ -1,0 +1,34 @@
+{
+  "schema": "aleph.xdr.patterns.v1",
+  "moduleKey": "known-cve",
+  "technique": "MITRE ATT&CK T1190",
+  "vulnerability": "CVE-2021-44228",
+  "source": "xdr/fixtures/known-cve.json의 수업용 Wazuh 형태 경보",
+  "note": "이름·규칙 수준·T1190 태그만으로 차단하지 않는다. 경보에 있는 요청 머리글 또는 URL 자체의 완전한 원격 조회 구문을 직접 확인하며, 원문·주소 인자·비밀값은 로그나 판정 사유에 복사하지 않는다. 원격 조회 표기는 수업용이며 실행·변형하지 않는다.",
+  "patterns": [
+    {
+      "id": "lookup_in_request_header",
+      "action": "block",
+      "evidence": "요청 머리글의 useragent에 닫힌 형태의 JNDI 원격 조회 표현이 있고 경보 출발지가 확인된다.",
+      "threshold": "완전한 조회 구문과 출발지 모두 확인"
+    },
+    {
+      "id": "lookup_in_request_url",
+      "action": "block",
+      "evidence": "요청 URL 인자에 닫힌 형태의 JNDI 원격 조회 표현이 있고 경보 출발지가 확인된다. 반복 여부는 확신도를 높이는 근거다.",
+      "threshold": "완전한 조회 구문과 출발지 모두 확인"
+    },
+    {
+      "id": "cve_name_or_partial_lookup",
+      "action": "alert",
+      "evidence": "CVE 번호 검색, jndi 단어, 부분적인 조회 표기, 점검 도구·라이브러리 언급처럼 확인이 필요하지만 완전한 원격 조회 구문은 없다.",
+      "threshold": "의심 단서만 있거나 공격 증거의 출처·형태가 부족"
+    },
+    {
+      "id": "routine_web_event",
+      "action": "record",
+      "evidence": "공개 화면·상태 확인·로그인·정적 파일·자기 자료·공지·세션·로그아웃처럼 악용 징후가 없는 일반 요청이다.",
+      "threshold": "조회 구문과 취약점 악용 단서 없음"
+    }
+  ]
+}
