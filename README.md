@@ -385,3 +385,7 @@ RLS는 authenticated 역할의 직접 DB 접근에 적용된다.
 - 정책 훼손이 의심되면 `node scripts/policy-preview.mjs`로 검증된 커밋과 현재 파일의 해시·차이를 먼저 비교한다. 차이가 있는 경우에만 `node scripts/policy-restore.mjs`의 미리 보기 및 `--expect-current-sha=... --apply` 절차를 사용한다. 다른 파일과 기존 자료는 지우지 않는다. 이전에 검증된 상태라면 실행하지 않는다.
 - B 메모 복구는 별도 보관한 신뢰할 사본·해시가 맞고 B의 본인 요청이 검증될 때 한 건만 수행한다. 사본이나 소유자 증거가 없으면 복구 POST를 실행하지 않는다. 복구한 다음 A/B 정상·거부 요청과 판정·탐지·설치 경로를 재확인한다.
 - 저장점의 `aleph.config.json`은 단계 **12**이며 `judgeIssuer`는 제공된 주소를 그대로 유지한다. `npm run bundle`은 배포된 같은 커밋을 확인한 후 실행해 `artifacts/submission.json`을 만든다. 제출 묶음의 자체 HTTP 점검은 운영 심판 41종 시험과 별개의 증빙이다.
+
+## XDR 웹 주입 보너스
+
+`xdr/README.md`의 웹 주입 실습 기록을 따른다. 저장소 루트에서 `node xdr/web-injection/read-alerts.mjs`, `npm run xdr:run -- web-injection`, `node xdr/web-injection/respond.mjs` 순서로 다시 실행할 수 있다. 수업용 경보 26건의 로컬 판정은 block 8건, alert 9건, record 9건이다. 로그와 만료 시각이 있는 거부 후보는 Git에서 제외되며 실제 ZTNA 거부는 연결되지 않았다. 운영 심판의 판정은 포털 제출 후에만 확인할 수 있다.

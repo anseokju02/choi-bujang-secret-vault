@@ -57,3 +57,11 @@ node scripts/xdr-run.mjs brute-force
 `npm run xdr:run -- brute-force` 는 로컬 `result.json` 에 28건의 판정을 다시 기록합니다. 수업용 경보에서 block 10건, alert 9건, record 9건을 확인했습니다. `node xdr/brute-force/respond.mjs` 는 차단 후보의 시작·만료 시각과 근거 경보 ID를 `artifacts/xdr-brute-force-deny-candidates.json` 에, block·alert 19건을 `xdr/alerts.log` 에 기록합니다. 이 출력 파일들은 Git에 올리지 않습니다.
 
 경보에 있는 출발지 주소와 가상 계정명은 운영 엔진이 확인한 ZTNA의 `subjectId`·`deviceId` 와 연결되어 있지 않습니다. 따라서 후보는 `active: false` 이며, 실제 판정기에 거부 규칙을 넣거나 접속을 차단했다고 주장하지 않습니다. 신뢰할 수 있는 사건 상관 정보가 제공되어야만 실제 정책과 연결할 수 있습니다. 위 건수는 로컬 예시 경보의 결과이며 운영 심판 점수가 아닙니다.
+
+## 웹 주입 실습 기록
+
+`node xdr/web-injection/read-alerts.mjs`는 수업용 웹 경보 26건의 출발지·가상 계정·규칙 수준·설명 범주만 출력합니다. 원본 URL 쿼리와 설명 원문은 출력하지 않습니다. `xdr/web-injection/patterns.json`에는 반복 SQL 구문, 스크립트 삽입, 경로 이탈, 명령 구분자와 단발·정상 요청을 구분한 근거가 있습니다. URL의 `doc-*` 이름은 실제 공격 문자열이 아니므로 그 이름만으로 차단하지 않습니다.
+
+`npm run xdr:run -- web-injection`은 격리 실행 가능한 `decide.mjs`로 26건을 다시 분류하고 Git에 올리지 않는 `result.json`을 만듭니다. 로컬 예시에서 block 8건, alert 9건, record 9건입니다. `node xdr/web-injection/respond.mjs`는 block·alert 17건을 `xdr/alerts.log`에 기록하며, 기존 다른 모듈의 기록은 유지합니다. 차단 경보는 출발지별로 묶어 근거 ID와 15분 만료 시각을 가진 후보를 `artifacts/xdr-web-injection-deny-candidates.json`에 기록합니다. 두 출력 경로 모두 Git에서 제외됩니다.
+
+웹 경보의 출발지 주소와 수업용 URL만으로는 운영 엔진이 확인한 `subjectId`·`deviceId`를 알아낼 수 없습니다. 후보는 `active: false`이며 `src/decider.mjs`에 주입되지 않습니다. 따라서 로컬 차단 판정 8건은 실제 접속 거부 8건을 뜻하지 않습니다. 신뢰할 수 있는 사건과 요청의 상관 계약이 제공되어야 실제 정책으로 연결할 수 있습니다.
