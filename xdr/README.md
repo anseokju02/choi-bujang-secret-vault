@@ -89,3 +89,11 @@ node scripts/xdr-run.mjs brute-force
 `npm run xdr:run -- privilege`는 파일 입출력이나 import가 없는 `decide.mjs`로 경보를 분류합니다. 로컬 가상 경보 결과는 block 9건, alert 8건, record 9건입니다. `node xdr/privilege/respond.mjs`는 block·alert 17건을 `xdr/alerts.log`에 설명 원문 없이 기록하며 다른 모듈 로그를 보존합니다. 차단 경보는 가상 계정·출발지별로 묶어 근거 ID와 15분 만료 시각이 있는 후보를 `artifacts/xdr-privilege-deny-candidates.json`에 기록합니다. 결과·로그·후보 파일은 Git에서 제외됩니다.
 
 가상 경보의 계정·IP는 운영 엔진이 확인한 `subjectId`·`deviceId`와 연결되지 않습니다. 후보는 `active: false`이고 실제 `src/decider.mjs`에 등록되지 않았으므로 차단 판정 9건이 실제 접속 거부를 뜻하지 않습니다. 검증된 사건 상관 계약이 제공돼야 실제 정책에 연결할 수 있습니다. 운영 심판의 결과는 포털 제출 후에만 알 수 있습니다.
+
+## 자료 빼돌리기 실습 기록
+
+`node xdr/exfiltration/read-alerts.mjs`는 수업용 전송 경보 30건에서 시각·출발지·가상 계정·규칙 수준·설명 범주만 출력합니다. 설명 원문과 목적지·파일 이름·전송 내용은 출력하지 않습니다. `xdr/exfiltration/patterns.json`에는 처음 보는 목적지로 짧은 시간에 많은 자료가 나간 정황, 업무 시간 밖 압축 파일 전송, 반복 대용량 전송, 평소 쓰지 않던 포트 사용과 자료실 전체 복사를 구분한 근거를 적었습니다. T1041/T1048 태그나 전송량 하나만으로 차단하지 않습니다.
+
+`npm run xdr:run -- exfiltration`은 독립 실행되는 `decide.mjs`로 가상 경보를 다시 분류하고 Git에서 제외된 `result.json`을 생성합니다. 로컬 결과는 block 10건, alert 10건, record 10건입니다. `node xdr/exfiltration/respond.mjs`는 block·alert 20건을 설명 원문 없이 `xdr/alerts.log`에 기록하고 앞선 다섯 모듈 로그를 보존합니다. 차단 경보의 문서용 목적지 주소 8개에는 근거 ID와 15분 만료 시각이 있는 **비활성 후보**를 `artifacts/xdr-exfiltration-deny-candidates.json`에 기록합니다. 로그와 후보, 결과 파일은 Git에서 제외됩니다.
+
+운영 판정 요청 계약에는 경보의 `dstip`과 연결되는 검증된 목적지 항목이 없습니다. 그래서 후보는 `active: false`이며 `src/decider.mjs`를 고치거나 실제 접속·목적지를 차단하지 않았습니다. 실제 정책 연결에는 신뢰할 수 있는 경보·요청 상관 정보와 목적지 정책 계약이 필요합니다. 위 건수는 로컬 가상 경보 결과이며 심판 점수는 포털 제출 후에만 확인할 수 있습니다.

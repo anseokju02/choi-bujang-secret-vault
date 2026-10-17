@@ -1,0 +1,45 @@
+{
+  "schema": "aleph.xdr.patterns.v1",
+  "moduleKey": "exfiltration",
+  "techniques": ["MITRE ATT&CK T1041", "MITRE ATT&CK T1048"],
+  "source": "xdr/fixtures/exfiltration.json의 수업용 Wazuh 형태 경보",
+  "note": "MITRE 태그, 주소 하나, 파일 한 개 또는 전송량만으로 차단하지 않는다. 실제 전송을 나타내는 설명, 유효한 출발·목적지·계정, 큰 전송량과 낯선 목적지·반복·평소와 다른 경로 등을 함께 확인한다. 수업용 IP를 운영 ZTNA의 검증된 식별자로 간주하지 않는다.",
+  "patterns": [
+    {
+      "id": "burst_to_first_seen_destination",
+      "action": "block",
+      "evidence": "처음 보는 목적지로 짧은 시간에 자료 200건이 240MB 전송되거나 메모 묶음 140건이 70MB 전송된다.",
+      "threshold": "완료된 전송, 50MB 이상, 100건 이상 및 처음 보는 목적지"
+    },
+    {
+      "id": "compressed_to_unusual_destination",
+      "action": "block",
+      "evidence": "수업 시간 밖 낯선 주소로 180MB 압축 파일이 나가거나, 낯선 주소로 압축 파일 3개가 연속 전송되거나 두 낯선 목적지로 같은 압축 파일이 전송된다.",
+      "threshold": "50MB 이상 압축 파일 전송과 낯선 목적지 및 비정상 시각·연속 전송·복수 목적지 중 하나"
+    },
+    {
+      "id": "repeated_large_transfer",
+      "action": "block",
+      "evidence": "같은 목적지로 90MB 전송이 8회 반복되거나 업무 시간 밖 210MB 전송이 15회이고, 명령 통로로 80MB 파일이 9회 반복된다.",
+      "threshold": "50MB 이상과 동일 목적지·비정상 시각·명령 통로에서 5회 이상 반복된 전송"
+    },
+    {
+      "id": "unusual_channel_or_full_copy",
+      "action": "block",
+      "evidence": "평소 쓰지 않던 포트로 60개 파일에 해당하는 120MB가 연속 전송되거나, 짧은 시간에 자료실 전체 400건 320MB가 외부 주소로 복사된다.",
+      "threshold": "50MB 이상과 비정상 포트·다수 파일 또는 외부 주소로 자료실 전체 복사"
+    },
+    {
+      "id": "uncertain_or_small_transfer",
+      "action": "alert",
+      "evidence": "낯선 주소에 단일 8MB 파일, 작은 파일 2건, 평소 목적지의 단발 증가, 백업처럼 보이는 전송, 실패한 전송, 압축 후 일부 전송은 추가 확인이 필요하다.",
+      "threshold": "경보는 있으나 대량·반복·비정상 목적지가 결합한 성공 전송 근거가 부족함"
+    },
+    {
+      "id": "routine_data_activity",
+      "action": "record",
+      "evidence": "작은 메모·공지 조회, 수업 자료 주소의 작은 동기화, 화면 새로고침, 자료실 저장, 로그아웃 등이다. 수업 자료 주소의 20KB 동기화에는 T1048 태그가 있어도 정상 활동이다.",
+      "threshold": "대량 외부 전송이나 낯선 목적지로의 비정상 전송 근거 없음"
+    }
+  ]
+}
